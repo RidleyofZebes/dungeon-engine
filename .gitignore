@@ -1,3 +1,6 @@
 
-.idea/*
-scraps/*
+@IGNORE/*.*
+*.pyc
+*.sav
+.idea/*.*
+scraps/*.*
