@@ -52,7 +52,6 @@ heroico = pygame.image.load('res/maphero.png')
 # Test starts here
 class Map:
     def __init__(self):
-        self.defaultxy = (486, 247)
         self.height = 100
         self.width = 100
         self.offsetX = 129
@@ -61,13 +60,32 @@ class Map:
         self.tile_margin = 1
         self.grid = {}
 
+    def reset(self):
+        defaultxy = (486, 250)
+        # print("Map Reset Disabled, use Map Editor.")
+        print("Resetting Map...")
+        player.x = 0
+        player.y = 0
+        self.offsetX = defaultxy[1]
+        self.offsetY = defaultxy[0]
+        self.grid = [
+            [{"ID": 1,
+              "name": "Floor",
+              "color": (169, 169, 169),
+              "isVisible": 0,
+              "isDiscovered": 0,
+              "isWall": 0}
+             for x in range(self.width)]
+            for y in range(self.height)]
+        print("Map reset")
+
 
 class Player:
     def __init__(self):
         self.name = "Nameless"
         self.x = 0
         self.y = 0
-        self.viewrange = 5
+        self.viewrange = 8
         self.icon = heroico
         self.rotation = 0
 
@@ -245,12 +263,13 @@ class Player:
 
 
 def message(text, *texloc, color=white):
+    textbox = pygame.Surface((999, 168))
     defaultcolor = color
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
     space = font.size(' ')[0]  # The width of a space.
-    max_width, max_height = 500, 255
+    max_width, max_height = 999, 168
     if not texloc:
-        pos = 20, 330
+        pos = 10, 10
     else:
         pos = texloc
     x, y = pos
@@ -275,10 +294,11 @@ def message(text, *texloc, color=white):
             if x + word_width >= max_width:
                 x = pos[0]  # Reset the x.
                 y += word_height  # Start on new row.
-            gw.blit(word_surface, (x, y))
+            textbox.blit(word_surface, (x, y))
             x += word_width + space
         x = pos[0]  # Reset the x.
         y += word_height  # Start on new row.
+    gw.blit(textbox, (10, 542))
 
 
 def save():
@@ -303,26 +323,6 @@ def load():
     map.tile_size, map.tile_margin = data['viewport']
     print("Dungeon Loaded")
 
-
-def reset_map():
-    # print("Map Reset Disabled, use Map Editor.")
-    print("Resetting Map...")
-    player.x = 0
-    player.y = 0
-    map.offsetX = map.defaultxy[1]
-    map.offsetY = map.defaultxy[0]
-    # map.grid = [[1 for x in range(map.width)] for y in range(map.height)]
-    map.grid = [
-        [{"ID": 1,
-          "name": "Stone Floor",
-          "color": (169, 169, 169),
-          "isVisible": 0,
-          "isDiscovered": 0,
-          "isWall": 0}
-         for x in range(map.width)]
-         for y in range(map.height)]
-    print("Map reset")
-
 map = Map()
 player = Player()
 
@@ -330,6 +330,8 @@ load()
 
 
 def main():
+    textbox = "Welcome, <!red:>Hero! Your destiny awaits."
+
     RAYS = 360  # Should be 360!
 
     STEP = 3  # The step of for cycle. More = Faster, but large steps may
@@ -345,7 +347,6 @@ def main():
         coscalc = math.cos(x/(180/math.pi))
         costable.append(coscalc)
 
-
     mapdisplay = 0  # Needs to be in some sort of window state class...
     tile_desc = ""  # Also an environment variable... better put it in the class, too.
 
@@ -358,8 +359,8 @@ def main():
             # Grid Click Events #####
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
-                if pos[0] > 529 and pos[1] > 14 and pos[0] < 785 and pos[
-                    1] < 270:  # Only take action for clicks within the minimap
+                if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
+                    1] < 537:  # Only take action for clicks within the minimap
                     column = (pos[0] - map.offsetY) // (map.tile_size + map.tile_margin)
                     row = (pos[1] - map.offsetX) // (map.tile_size + map.tile_margin)
                     print("Left Click ", pos, "Grid coordinates: ", row, column)
@@ -375,16 +376,17 @@ def main():
                         print("Deselected")
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 pos = pygame.mouse.get_pos()
-                if pos[0] > 529 and pos[1] > 14 and pos[0] < 785 and pos[
-                    1] < 270:  # Only take action for clicks within the minimap
+                if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
+                    1] < 537:  # Only take action for clicks within the minimap
                     column = (pos[0] - map.offsetY) // (map.tile_size + map.tile_margin)
                     row = (pos[1] - map.offsetX) // (map.tile_size + map.tile_margin)
                     print("Right Click ", pos, "Grid coordinates: ", row, column)
                     if row == player.x and column == player.y:
-                        tile_desc = "Player"
+                        textbox = "You see a tall, good looking... Wait a minute, that's <!blue:>you."
                         print(tile_desc)
                     else:
                         tile_desc = map.grid[row][column]["name"]
+                        textbox = tile_desc
                         print(tile_desc)
 
             # Player Movement #####
@@ -424,7 +426,7 @@ def main():
                 if multikey[pygame.K_LCTRL] and multikey[pygame.K_x]:
                     load()
                 if multikey[pygame.K_LCTRL] and multikey[pygame.K_r]:
-                    reset_map()
+                    map.reset()
 
                 if multikey[pygame.K_LCTRL] and multikey[pygame.K_m]:
                     print("Switching Maps...")
@@ -444,7 +446,7 @@ def main():
 
             viewscreen = pygame.Surface((999, 527))
             minimap = pygame.Surface((256, 256))
-            textbox = pygame.Surface((999, 168))
+
             statmenu = pygame.Surface((257, 439))
 
             """ Draw the map """
@@ -454,7 +456,6 @@ def main():
                 for y in range(map.width):
                     if map.grid[x][y]["isVisible"] == 1:
                         map.grid[x][y]["isVisible"] = 0
-
             # Determine which squares are visible...
             for i in range(0, RAYS + 1, STEP):
                 ax = sintable[i]  # Get precalculated value sin(x / (180 / pi))
@@ -469,9 +470,7 @@ def main():
                     map.grid[int(round(x))][int(round(y))].update({"isDiscovered": 1, "isVisible": 1})  # Discover the tile and make it visible
                     if map.grid[int(round(x))][int(round(y))]["isWall"] == 1:  # Stop ray if it hit
                         break
-
             map.grid[player.x][player.y].update({"isDiscovered": 1, "isVisible": 1})
-
             for x in range(map.height):
                 for y in range(map.width):
                     tile = pygame.Surface((map.tile_size, map.tile_size))
@@ -488,6 +487,18 @@ def main():
                     #     playerico = pygame.transform.scale(playerico, (map.tile_size, map.tile_size))
                     #     viewscreen.blit(playerico, ((player.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
                     #                                 (player.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
+            """ Draw the Minimap """
+            for x in range(map.height):
+                for y in range(map.width):
+                    tile = pygame.Surface((1, 1))
+                    tile.fill((map.grid[x][y].get("color")))
+                    # Not useful for Map Editor, but VERY YES in Game Engine.
+                    if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get( "isDiscovered") == 1:
+                        tile.set_alpha(64)
+                    if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get("isDiscovered") == 0:
+                        tile.fill(black)
+                    minimap.blit(tile, ((y + map.offsetY/(map.tile_size+map.tile_margin)) + 110,
+                                        (x + map.offsetX/(map.tile_size+map.tile_margin)) + 119))
 
             """ Draw the Player Icon """
             maparrow = pygame.transform.rotate(player.icon, player.rotation)
@@ -500,18 +511,17 @@ def main():
             descrect.center = (658, 300)
             # gw.blit(tiledescrect, descrect)
 
-            # message("Welcome, <!red:>Hero! Your destiny awaits.")
+            message(textbox)
 
             # Create the 4 main surfaces: viewscreen, minimap, textbox, and menu
 
             gw.blit(viewscreen, (10, 10))
             gw.blit(minimap, (1014, 10))
-            gw.blit(textbox, (10, 542))
+
             gw.blit(statmenu, (1014, 271))
 
-
-
-
+        """ Second display view """
+        # Needs work, supposed to display map scalable and scrollable. For now just barely managable (somehow).
         if mapdisplay == 1:  # Supposed to be the map screen. Needs massive alterations.
             for x in range(map.height):
                 for y in range(map.width):
@@ -528,12 +538,12 @@ def main():
                             color = dkgreen
                     if x == player.x and y == player.y:
                         color = red
-                    pygame.draw.rect(gw, color, ((1 + 5) * y + 1, (1 + 5) * x + 1, 5, 5),
-                                     0)  # Needs work, supposed to display map scalable and scrollable. For now just barely managable (somehow).
+                    pygame.draw.rect(gw, color, ((1 + 5) * y + 1, (1 + 5) * x + 1, 5, 5), 0)
 
         clock.tick(FPS)
 
         pygame.display.update()
+
 
 if __name__ == '__main__':
     main()
