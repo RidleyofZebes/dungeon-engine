@@ -1,7 +1,6 @@
 
-@IGNORE/*.*
 *.pyc
 *.sav
-.idea/*.*
-scraps/*.*
+/.idea
+/scraps
 *.xml
