@@ -45,11 +45,17 @@ purple = (78, 48, 132)
 font = pygame.font.Font('res/alkhemikal.ttf', 28)
 
 # Image(s)
-frame = pygame.image.load('res/window_wide.png')
-heroico = pygame.image.load('res/maphero.png')
-
+frame = pygame.image.load('res/window_wide.png').convert()
+heroico = pygame.image.load('res/maphero.png').convert()
+titlecard = pygame.image.load('res/studio_logo.png').convert()
 
 # Test starts here
+class GameState:
+    def __init__(self):
+        self.mapdisplay = 0
+        self.titlecard = True
+        self.mainmemu = False
+
 class Map:
     def __init__(self):
         self.height = 100
@@ -325,11 +331,37 @@ def load():
 
 map = Map()
 player = Player()
+gs = GameState()
 
 load()
 
 
 def main():
+    while gs.titlecard == True:
+        fadein = True
+        i = 0
+        while fadein == True:
+            gw.fill(black)
+            titlecard.set_alpha(i)
+            gw.blit(titlecard, (0, 0))
+            pygame.display.update()
+            i += 1
+            print(i)
+            if i >= 255:
+                fadein = False
+        while fadein == False:
+            gw.fill(black)
+            titlecard.set_alpha(i)
+            gw.blit(titlecard, (0, 0))
+            pygame.display.update()
+            i -= 1
+            print(i)
+            if i <= 0:
+                gs.titlecard = False
+
+
+
+
     textbox = "Welcome, <!red:>Hero! Your destiny awaits."
 
     RAYS = 360  # Should be 360!
@@ -347,7 +379,6 @@ def main():
         coscalc = math.cos(x/(180/math.pi))
         costable.append(coscalc)
 
-    mapdisplay = 0  # Needs to be in some sort of window state class...
     tile_desc = ""  # Also an environment variable... better put it in the class, too.
 
     running = True
@@ -361,8 +392,8 @@ def main():
                 pos = pygame.mouse.get_pos()
                 if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
                     1] < 537:  # Only take action for clicks within the minimap
-                    column = (pos[0] - map.offsetY) // (map.tile_size + map.tile_margin)
-                    row = (pos[1] - map.offsetX) // (map.tile_size + map.tile_margin)
+                    column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
+                    row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
                     print("Left Click ", pos, "Grid coordinates: ", row, column)
                     if row < 0 or column < 0 or row > map.width - 1 or column > map.height - 1:
                         print("Invalid")
@@ -378,8 +409,8 @@ def main():
                 pos = pygame.mouse.get_pos()
                 if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
                     1] < 537:  # Only take action for clicks within the minimap
-                    column = (pos[0] - map.offsetY) // (map.tile_size + map.tile_margin)
-                    row = (pos[1] - map.offsetX) // (map.tile_size + map.tile_margin)
+                    column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
+                    row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
                     print("Right Click ", pos, "Grid coordinates: ", row, column)
                     if row == player.x and column == player.y:
                         textbox = "You see a tall, good looking... Wait a minute, that's <!blue:>you."
@@ -430,17 +461,17 @@ def main():
 
                 if multikey[pygame.K_LCTRL] and multikey[pygame.K_m]:
                     print("Switching Maps...")
-                    if mapdisplay == 0:
-                        mapdisplay = 1
-                    elif mapdisplay == 1:
-                        mapdisplay = 0
-                    print("Switched to Display " + str(mapdisplay))
+                    if gs.mapdisplay == 0:
+                        gs.mapdisplay = 1
+                    elif gs.mapdisplay == 1:
+                        gs.mapdisplay = 0
+                    print("Switched to Display " + str(gs.mapdisplay))
 
         """ Begin drawing the game screen """
 
         gw.fill(dkgray)
 
-        if mapdisplay == 0:
+        if gs.mapdisplay == 0:
 
             # Create the 4 main surfaces: viewscreen, minimap, textbox, and menu
 
@@ -467,7 +498,10 @@ def main():
                     y += ay
                     if x < 0 or y < 0 or x > map.width or y > map.height:  # If ray is out of range
                         break
-                    map.grid[int(round(x))][int(round(y))].update({"isDiscovered": 1, "isVisible": 1})  # Discover the tile and make it visible
+                    try:
+                        map.grid[int(round(x))][int(round(y))].update({"isDiscovered": 1, "isVisible": 1})  # Discover the tile and make it visible
+                    except IndexError:
+                        break
                     if map.grid[int(round(x))][int(round(y))]["isWall"] == 1:  # Stop ray if it hit
                         break
             map.grid[player.x][player.y].update({"isDiscovered": 1, "isVisible": 1})
@@ -522,7 +556,7 @@ def main():
 
         """ Second display view """
         # Needs work, supposed to display map scalable and scrollable. For now just barely managable (somehow).
-        if mapdisplay == 1:  # Supposed to be the map screen. Needs massive alterations.
+        if gs.mapdisplay == 1:  # Supposed to be the map screen. Needs massive alterations.
             for x in range(map.height):
                 for y in range(map.width):
                     if map.grid[x][y]["isVisible"] == 0:
