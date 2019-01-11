@@ -4,3 +4,4 @@
 *.sav
 .idea/*.*
 scraps/*.*
+*.xml
