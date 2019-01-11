@@ -257,14 +257,14 @@ def message(text, *texloc, color=white):
     for line in words:
         for word in line:
             color = defaultcolor
-            if re.search('<!(.*):>',
-                         word):  # Searches for text wrapped in <!these characters:>, which is used here to change the color of the word.
+            # Searches for text wrapped in <!these characters:>, which is used here to change the color of the word.
+            if re.search('<!(.*):>', word):
                 colorcheck = re.search('<!(.*):>', word)  # Assigns the captured string to a variable.
-                strip = re.sub(r'\W', "",
-                               colorcheck.group())  # Removes everything from the string except the word, in this case, the color.
-                word = re.sub(colorcheck.group(), "", word)  # Removes the flag and keyword from the text for cleanup.
-                word_surface = font.render(word, False,
-                                           color)  # Re-renders and gets the new size of the word after the flag has been removed.
+                strip = re.sub(r'\W', "", colorcheck.group())  # Removes everything from the string except the word.
+                # Removes the flag and keyword from the text for cleanup.
+                word = re.sub(colorcheck.group(), "", word)
+                # Re-renders and gets the new size of the word after the flag has been removed.
+                word_surface = font.render(word, False, color)
                 word_width, word_height = word_surface.get_size()
                 color = eval(strip)
                 if x + word_width >= max_width:
