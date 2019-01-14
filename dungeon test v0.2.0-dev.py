@@ -22,7 +22,7 @@ title = "dungeon test v0.2.0-dev"
 window_res = (1280, 720)
 FPS = 30
 
-gw = pygame.display.set_mode(window_res)
+gw = pygame.display.set_mode(window_res, pygame.FULLSCREEN)
 pygame.display.set_caption(title)
 
 pygame.key.set_repeat(10, 50)
@@ -46,15 +46,18 @@ font = pygame.font.Font('res/alkhemikal.ttf', 28)
 
 # Image(s)
 frame = pygame.image.load('res/window_wide.png').convert()
-heroico = pygame.image.load('res/maphero.png').convert()
+heroico = pygame.image.load('res/maphero.png')
 titlecard = pygame.image.load('res/studio_logo.png').convert()
+gamelogo = pygame.image.load('res/game_logo.png').convert()
 
 # Test starts here
 class GameState:
     def __init__(self):
         self.mapdisplay = 0
+        self.INTRO_DISABLED = False
         self.titlecard = True
-        self.mainmemu = False
+        self.mainmenu = False
+
 
 class Map:
     def __init__(self):
@@ -307,6 +310,44 @@ def message(text, *texloc, color=white):
     gw.blit(textbox, (10, 542))
 
 
+def titlescreen():
+    while gs.titlecard:
+        pygame.time.wait(2000)
+        fadein = True
+        i = 0
+        while fadein:
+            gw.fill(black)
+            titlecard.set_alpha(i)
+            gw.blit(titlecard, (0, 0))
+            pygame.display.update()
+            i += 1
+            if i >= 255:
+                pygame.time.wait(2000)
+                fadein = False
+        while not fadein:
+            gw.fill(black)
+            titlecard.set_alpha(i)
+            gw.blit(titlecard, (0, 0))
+            pygame.display.update()
+            i -= 1
+            if i <= 1:
+                fadein = True
+                gs.titlecard = False
+
+
+def mainmenu():
+    gs.mainmenu = True
+    while gs.mainmenu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        gw.fill(black)
+        gw.blit(gamelogo, (0, 0))
+        pygame.display.update()
+
+
+
 def save():
     print("Saving...")
     data = {'dungeon': map.grid,
@@ -337,32 +378,12 @@ load()
 
 
 def main():
-    while gs.titlecard == True:
-        fadein = True
-        i = 0
-        while fadein == True:
-            gw.fill(black)
-            titlecard.set_alpha(i)
-            gw.blit(titlecard, (0, 0))
-            pygame.display.update()
-            i += 1
-            print(i)
-            if i >= 255:
-                fadein = False
-        while fadein == False:
-            gw.fill(black)
-            titlecard.set_alpha(i)
-            gw.blit(titlecard, (0, 0))
-            pygame.display.update()
-            i -= 1
-            print(i)
-            if i <= 0:
-                gs.titlecard = False
+    if not gs.INTRO_DISABLED:
+        titlescreen()
 
+    mainmenu()
 
-
-
-    textbox = "Welcome, <!red:>Hero! Your destiny awaits."
+    textbox = "Welcome, <!red:>%s! Your destiny awaits." % (player.name)
 
     RAYS = 360  # Should be 360!
 
