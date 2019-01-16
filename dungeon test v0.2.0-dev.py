@@ -51,6 +51,7 @@ heroico = pygame.image.load('res/maphero.png')
 titlecard = pygame.image.load('res/studio_logo.png').convert()
 gamelogo = pygame.image.load('res/game_logo.png').convert()
 
+
 # Test starts here
 class GameState:
     def __init__(self):
@@ -58,6 +59,7 @@ class GameState:
         self.INTRO_DISABLED = True
         self.titlecard = True
         self.mainmenu = False
+        self.mapedit = False
 
 
 class Map:
@@ -88,6 +90,51 @@ class Map:
              for x in range(self.width)]
             for y in range(self.height)]
         print("Map reset")
+
+
+class Brush:
+    def __init__(self):
+        self.ID = 0
+        self.name = "Endless Void"
+        self.color = (0, 0, 0)  # Black
+        self.isWall = 0
+        self.texture = ""
+
+    """
+    isWall: 0 = not a wall
+    isWall: 1 = a wall
+    isWall: 2 = transparent (i.e. window)
+    """
+
+    def swap_brush(self, swap):
+        if swap == 0:
+            self.ID = swap
+            self.name = "Endless Void"
+            self.color = (0, 0, 0)  # Black
+            self.isWall = 2
+        elif swap == 1:
+            self.ID = swap
+            self.name = "Stone Floor"
+            self.color = (169, 169, 169)  # LtGray
+            self.isWall = 0
+        elif swap == 2:
+            self.ID = swap
+            self.name = "Stone Wall"
+            self.color = (0, 255, 0)  # Green... but why tho?
+            self.isWall = 1
+        elif swap == 3:
+            self.ID = swap
+            self.name = "Custom Block"
+            self.color = (78, 48, 132)  # Purple. For Magic.
+            self.isWall = 0
+        elif swap == "player":
+            self.ID = swap
+            self.name = "Player"
+        else:
+            print("This brush not implemented.")
+            return
+
+        print("Brush changed to " + self.name)
 
 
 class Player:
@@ -136,8 +183,7 @@ class Player:
             # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
         if border_chk < 0:
             print("Out of Area")
-            print(border_chk)
-        elif wall_check == 1:
+        elif wall_check > 0:
             print("Blocked")
         else:
             exec(move_dir[self.rotation][x])
@@ -171,8 +217,7 @@ class Player:
             # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
         if border_chk < 0:
             print("Out of Area")
-            print(border_chk)
-        elif wall_check == 1:
+        elif wall_check > 0:
             print("Blocked")
         else:
             exec(move_dir[self.rotation][x])
@@ -290,17 +335,22 @@ def save():
 
 def load():
     print("Loading...")
-    with open('save/dungeon3.sav', 'rb') as f:
-        data = pickle.load(f)
-    map.grid = data['dungeon']
-    player.x, player.y, player.rotation = data['player']
-    map.offsetX, map.offsetY = data['offset']
-    map.tile_size, map.tile_margin = data['viewport']
-    print("Dungeon Loaded")
+    try:
+        with open('save/dungeon3.sav', 'rb') as f:
+            data = pickle.load(f)
+        map.grid = data['dungeon']
+        player.x, player.y, player.rotation = data['player']
+        map.offsetX, map.offsetY = data['offset']
+        map.tile_size, map.tile_margin = data['viewport']
+        print("Dungeon Loaded")
+    except Exception:
+        print("No file to load, generating new dungeon...")
+        map.reset()
 
 map = Map()
 player = Player()
 gs = GameState()
+brush = Brush()
 
 load()
 
@@ -337,23 +387,44 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             # Grid Click Events #####
+
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
                 if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
-                    1] < 537:  # Only take action for clicks within the minimap
+                    1] < 537:  # Only take action for clicks within the map
                     column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
                     row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
                     print("Left Click ", pos, "Grid coordinates: ", row, column)
-                    if row < 0 or column < 0 or row > map.width - 1 or column > map.height - 1:
-                        print("Invalid")
-                    elif row == player.x and column == player.y:
-                        print("Player")
-                    elif map.grid[row][column] == 1:
-                        map.grid[row][column] = 2
-                        print("Selected")
-                    elif map.grid[row][column] == 2:
-                        map.grid[row][column] = 1
-                        print("Deselected")
+
+                    if gs.mapedit:
+                        # if click is outside the map:
+                        if row < 0 or column < 0 or row > map.width - 1 or column > map.height - 1:
+                            print("Invalid")
+                        if brush.ID == "player":
+                            if row == player.x and column == player.y:
+                                player.rotate(1)
+                            else:
+                                player.x, player.y = row, column
+                                print("Moved Player to " + str(row), str(column))
+                        else:
+                            print("changed " + str(row),
+                                  str(column) + " from " + map.grid[row][column]['name'] + " to " + brush.name)
+                            map.grid[row][column]["ID"] = brush.ID
+                            map.grid[row][column]["name"] = brush.name
+                            map.grid[row][column]["color"] = brush.color
+                            map.grid[row][column]["isWall"] = brush.isWall
+                    if not gs.mapedit:
+
+                        if row < 0 or column < 0 or row > map.width - 1 or column > map.height - 1:
+                            print("Invalid")
+                        elif row == player.x and column == player.y:
+                            print("Player")
+                        elif map.grid[row][column] == 1:
+                            map.grid[row][column] = 2
+                            print("Selected")
+                        elif map.grid[row][column] == 2:
+                            map.grid[row][column] = 1
+                            print("Deselected")
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 pos = pygame.mouse.get_pos()
                 if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
@@ -396,7 +467,7 @@ def main():
                     player.rotate(1)
                 if event.key == pygame.K_e:
                     # print("Examine/Interact not yet implemented, but reserved.")
-                    print("Testing Examine")
+                    print("Examining...")
                     try:
                         textbox = player.examine()
                     except IndexError:
@@ -404,6 +475,13 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     print("Shutting down...")
                     running = False
+                if event.key == pygame.K_BACKQUOTE:
+                    if not gs.mapedit:
+                        gs.mapedit = True
+                        print("Entering Map Editor Mode...")
+                    elif gs.mapedit:
+                        gs.mapedit = False
+                        print("Map Editor Disabled...")
 
                 # Multikey Commands #####
                 if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_LCTRL:
@@ -420,6 +498,22 @@ def main():
                     elif gs.mapdisplay == 1:
                         gs.mapdisplay = 0
                     print("Switched to Display " + str(gs.mapdisplay))
+
+                # Map Editor Commands #####
+                if gs.mapedit:
+                    if event.key == pygame.K_1:
+                        brush.swap_brush(1)
+                    if event.key == pygame.K_2:
+                        brush.swap_brush(2)
+                    if event.key == pygame.K_3:
+                        brush.swap_brush(3)
+                    if event.key == pygame.K_4:
+                        brush.swap_brush(4)
+                    if event.key == pygame.K_5:
+                        brush.swap_brush(5)
+                    # ...
+                    if event.key == pygame.K_0:
+                        brush.swap_brush(0)
 
         """ Begin drawing the game screen """
 
