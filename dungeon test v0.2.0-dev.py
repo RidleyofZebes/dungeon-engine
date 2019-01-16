@@ -380,14 +380,14 @@ def main():
                     print("Move Back")
                     player.move("backward")
                     print("Moved to", player.x, player.y)
-                if multikey[pygame.K_LSHIFT] and multikey[pygame.K_a]:
+                if event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
                     print("Strafe Left")
                     player.strafe("left")
                     print("Moved to", player.x, player.y)
                 elif event.key == pygame.K_a:
                     print("Turn Right")
                     player.rotate(-1)
-                if multikey[pygame.K_LSHIFT] and multikey[pygame.K_d]:
+                if event.key == pygame.K_d and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
                     print("Strafe Right")
                     player.strafe("right")
                     print("Moved to", player.x, player.y)
@@ -406,11 +406,11 @@ def main():
                     running = False
 
                 # Multikey Commands #####
-                if multikey[pygame.K_LCTRL] and multikey[pygame.K_z]:
+                if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     save()
-                if multikey[pygame.K_LCTRL] and multikey[pygame.K_x]:
+                if event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     load()
-                if multikey[pygame.K_LCTRL] and multikey[pygame.K_r]:
+                if event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     map.reset()
 
                 if multikey[pygame.K_LCTRL] and multikey[pygame.K_m]:
