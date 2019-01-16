@@ -4,3 +4,5 @@
 *.xml
 /.idea
 /scraps
+/res/frame.png
+/res/viewportmockup.png
