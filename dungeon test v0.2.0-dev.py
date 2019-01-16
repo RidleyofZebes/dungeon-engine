@@ -98,7 +98,6 @@ class Player:
         self.viewrange = 8
         self.icon = heroico
         self.rotation = 0
-        self.facing = "N"  # TODO: Remove this.
 
 
 
@@ -109,7 +108,7 @@ class Player:
         # self.lvl = 1
         # self.gold = 0
 
-    def move(self, way):
+    def move(self, direction):
         mts = map.tile_size + map.tile_margin
         move_dir = {0:   ['self.x -= 1', 'self.x += 1'],
                     180: ['self.x += 1', 'self.x -= 1'],
@@ -127,7 +126,7 @@ class Player:
                     180: ['map.offsetX -= mts', 'map.offsetX += mts'],
                     -90: ['map.offsetY -= mts', 'map.offsetY += mts'],
                     90:  ['map.offsetY += mts', 'map.offsetY -= mts']}
-        x = 0 if way == "forward" else 1
+        x = 0 if direction == "forward" else 1
         try:
             wall_check = eval("map.grid" + next_sqr[self.rotation][x])["isWall"]
             border_chk = eval(broken_thing[self.rotation][x])
@@ -144,84 +143,40 @@ class Player:
             exec(move_dir[self.rotation][x])
             exec(map_move[self.rotation][x])
 
-    # TODO: Re-code Strafe() to match the new movement code.
     def strafe(self, direction):
-        if self.rotation == 0:
-            facing = "N"
-        if self.rotation == 180:
-            facing = "S"
-        if self.rotation == -90:
-            facing = "E"
-        if self.rotation == 90:
-            facing = "W"
-        if facing == "N":
-            if direction == "left":
-                if self.y == 0:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y - 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y -= 1
-                    map.offsetY += (map.tile_size + map.tile_margin)
-            if direction == "right":
-                if self.y == map.width - 1:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y + 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y += 1
-                    map.offsetY -= (map.tile_size + map.tile_margin)
-        if facing == "S":
-            if direction == "right":
-                if self.y == 0:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y - 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y -= 1
-                    map.offsetY += (map.tile_size + map.tile_margin)
-            if direction == "left":
-                if self.y == map.width - 1:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y + 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y += 1
-                    map.offsetY -= (map.tile_size + map.tile_margin)
-        if facing == "E":
-            if direction == "left":
-                if self.x == 0:
-                    print("Out of Range")
-                elif map.grid[self.x - 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x -= 1
-                    map.offsetX += (map.tile_size + map.tile_margin)
-            if direction == "right":
-                if self.x == map.height - 1:
-                    print("Out of Range")
-                elif map.grid[self.x + 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x += 1
-                    map.offsetX -= (map.tile_size + map.tile_margin)
-        if facing == "W":
-            if direction == "left":
-                if self.x == map.height - 1:
-                    print("Out of Range")
-                elif map.grid[self.x + 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x += 1
-                    map.offsetX -= (map.tile_size + map.tile_margin)
-            if direction == "right":
-                if self.x == 0:
-                    print("Out of Range")
-                elif map.grid[self.x - 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x -= 1
-                    map.offsetX += (map.tile_size + map.tile_margin)
+        mts = map.tile_size + map.tile_margin
+        move_dir = {0:   ['self.y += 1', 'self.y -= 1'],
+                    180: ['self.y -= 1', 'self.y += 1'],
+                    -90: ['self.x += 1', 'self.x -= 1'],
+                    90:  ['self.x -= 1', 'self.x += 1']}
+        next_sqr = {0:   ['[self.x][self.y + 1]', '[self.x][self.y - 1]'],
+                    180: ['[self.x][self.y - 1]', '[self.x][self.y + 1]'],
+                    -90: ['[self.x + 1][self.y]', '[self.x - 1][self.y]'],
+                    90:  ['[self.x - 1][self.y]', '[self.x + 1][self.y]']}
+        broken_thing = {0:   ['self.y + 1', 'self.y - 1'],
+                        180: ['self.y - 1', 'self.y + 1'],
+                        -90: ['self.x + 1', 'self.x - 1'],
+                        90:  ['self.x - 1', 'self.x + 1']}
+        map_move = {0:   ['map.offsetY -= mts', 'map.offsetY += mts'],
+                    180: ['map.offsetY += mts', 'map.offsetY -= mts'],
+                    -90: ['map.offsetX -= mts', 'map.offsetX += mts'],
+                    90:  ['map.offsetX += mts', 'map.offsetX -= mts']}
+        x = 0 if direction == "right" else 1
+        try:
+            wall_check = eval("map.grid" + next_sqr[self.rotation][x])["isWall"]
+            border_chk = eval(broken_thing[self.rotation][x])
+        except IndexError:
+            border_chk = -1  # This is a hack. I am ashamed of it, but it works. Too tired to fix it right now.
+            # It's supposed to check if the next square is out of bounds. In this scenario, it throws an error and
+            # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
+        if border_chk < 0:
+            print("Out of Area")
+            print(border_chk)
+        elif wall_check == 1:
+            print("Blocked")
+        else:
+            exec(move_dir[self.rotation][x])
+            exec(map_move[self.rotation][x])
 
     def rotate(self, turn):
         cardinal = (0, -90, 180, 90)  # (0 = N), (90 = W), (180 = S), (-90 = E)
