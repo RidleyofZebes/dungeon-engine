@@ -22,7 +22,8 @@ title = "dungeon test v0.2.0-dev"
 window_res = (1280, 720)
 FPS = 30
 
-gw = pygame.display.set_mode(window_res, pygame.FULLSCREEN)
+gw = pygame.display.set_mode(window_res)
+#gw = pygame.display.set_mode(window_res, pygame.FULLSCREEN)
 pygame.display.set_caption(title)
 
 pygame.key.set_repeat(10, 50)
@@ -54,7 +55,7 @@ gamelogo = pygame.image.load('res/game_logo.png').convert()
 class GameState:
     def __init__(self):
         self.mapdisplay = 0
-        self.INTRO_DISABLED = False
+        self.INTRO_DISABLED = True
         self.titlecard = True
         self.mainmenu = False
 
@@ -97,6 +98,9 @@ class Player:
         self.viewrange = 8
         self.icon = heroico
         self.rotation = 0
+        self.facing = "N"  # TODO: Remove this.
+
+
 
         # self.killcount = 0
         # self.encounter = 0
@@ -105,82 +109,42 @@ class Player:
         # self.lvl = 1
         # self.gold = 0
 
-    def move(self, direction):
-        if self.rotation == 0:
-            facing = "N"
-        if self.rotation == 180:
-            facing = "S"
-        if self.rotation == -90:
-            facing = "E"
-        if self.rotation == 90:
-            facing = "W"
-        if direction == "forward":
-            if facing == "N":
-                if self.x == 0:
-                    print("Out of Range")
-                elif map.grid[self.x - 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x -= 1
-                    map.offsetX += (map.tile_size + map.tile_margin)
-            if facing == "S":
-                if self.x == map.height - 1:
-                    print("Out of Range")
-                elif map.grid[self.x + 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x += 1
-                    map.offsetX -= (map.tile_size + map.tile_margin)
-            if facing == "W":
-                if self.y == 0:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y - 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y -= 1
-                    map.offsetY += (map.tile_size + map.tile_margin)
-            if facing == "E":
-                if self.y == map.width - 1:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y + 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y += 1
-                    map.offsetY -= (map.tile_size + map.tile_margin)
-        if direction == "backward":
-            if facing == "S":
-                if self.x == 0:
-                    print("Out of Range")
-                elif map.grid[self.x - 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x -= 1
-                    map.offsetX += (map.tile_size + map.tile_margin)
-            if facing == "N":
-                if self.x == map.height - 1:
-                    print("Out of Range")
-                elif map.grid[self.x + 1][self.y]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.x += 1
-                    map.offsetX -= (map.tile_size + map.tile_margin)
-            if facing == "E":
-                if self.y == 0:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y - 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y -= 1
-                    map.offsetY += (map.tile_size + map.tile_margin)
-            if facing == "W":
-                if self.y == map.width - 1:
-                    print("Out of Range")
-                elif map.grid[self.x][self.y + 1]["isWall"] == 1:
-                    print("Blocked")
-                else:
-                    self.y += 1
-                    map.offsetY -= (map.tile_size + map.tile_margin)
+    def move(self, way):
+        mts = map.tile_size + map.tile_margin
+        move_dir = {0:   ['self.x -= 1', 'self.x += 1'],
+                    180: ['self.x += 1', 'self.x -= 1'],
+                    -90: ['self.y += 1', 'self.y -= 1'],
+                    90:  ['self.y -= 1', 'self.y += 1']}
+        next_sqr = {0:   ['[self.x - 1][self.y]', '[self.x + 1][self.y]'],
+                    180: ['[self.x + 1][self.y]', '[self.x - 1][self.y]'],
+                    -90: ['[self.x][self.y + 1]', '[self.x][self.y - 1]'],
+                    90:  ['[self.x][self.y - 1]', '[self.x][self.y + 1]']}
+        broken_thing = {0:   ['self.x - 1', 'self.x + 1'],
+                        180: ['self.x + 1', 'self.x - 1'],
+                        -90: ['self.y + 1', 'self.y - 1'],
+                        90:  ['self.y - 1', 'self.y + 1']}
+        map_move = {0:   ['map.offsetX += mts', 'map.offsetX -= mts'],
+                    180: ['map.offsetX -= mts', 'map.offsetX += mts'],
+                    -90: ['map.offsetY -= mts', 'map.offsetY += mts'],
+                    90:  ['map.offsetY += mts', 'map.offsetY -= mts']}
+        x = 0 if way == "forward" else 1
+        try:
+            wall_check = eval("map.grid" + next_sqr[self.rotation][x])["isWall"]
+            border_chk = eval(broken_thing[self.rotation][x])
+        except IndexError:
+            border_chk = -1  # This is a hack. I am ashamed of it, but it works. Too tired to fix it right now.
+            # It's supposed to check if the next square is out of bounds. In this scenario, it throws an error and
+            # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
+        if border_chk < 0:
+            print("Out of Area")
+            print(border_chk)
+        elif wall_check == 1:
+            print("Blocked")
+        else:
+            exec(move_dir[self.rotation][x])
+            exec(map_move[self.rotation][x])
 
+    # TODO: Re-code Strafe() to match the new movement code.
     def strafe(self, direction):
         if self.rotation == 0:
             facing = "N"
@@ -270,6 +234,15 @@ class Player:
                 print("Rotated to " + str(cardinal[x]) + " degrees")
                 return
 
+    def examine(self):
+        next_sqr = {0:   '[self.x - 1][self.y]',
+                    180: '[self.x + 1][self.y]',
+                    -90: '[self.x][self.y + 1]',
+                    90:  '[self.x][self.y - 1]'}
+        newmsg = eval("map.grid" + next_sqr[self.rotation])["name"]
+        return newmsg
+
+
 
 def message(text, *texloc, color=white):
     textbox = pygame.Surface((999, 168))
@@ -345,7 +318,7 @@ def mainmenu():
         gw.fill(black)
         gw.blit(gamelogo, (0, 0))
         pygame.display.update()
-
+    # TODO: Finish menu and add buttons.
 
 
 def save():
@@ -381,7 +354,7 @@ def main():
     if not gs.INTRO_DISABLED:
         titlescreen()
 
-    mainmenu()
+        mainmenu()
 
     textbox = "Welcome, <!red:>%s! Your destiny awaits." % (player.name)
 
@@ -467,7 +440,12 @@ def main():
                     print("Turn Left")
                     player.rotate(1)
                 if event.key == pygame.K_e:
-                    print("Examine/Interact not yet implemented, but reserved.")
+                    # print("Examine/Interact not yet implemented, but reserved.")
+                    print("Testing Examine")
+                    try:
+                        textbox = player.examine()
+                    except IndexError:
+                        print("Nope.")
                 if event.key == pygame.K_ESCAPE:
                     print("Shutting down...")
                     running = False
