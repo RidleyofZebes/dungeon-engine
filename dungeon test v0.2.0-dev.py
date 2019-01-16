@@ -386,17 +386,16 @@ def main():
 
             if event.type == pygame.QUIT:
                 running = False
-            # Grid Click Events #####
 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
-                    1] < 537:  # Only take action for clicks within the map
-                    column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
-                    row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
-                    print("Left Click ", pos, "Grid coordinates: ", row, column)
-
-                    if gs.mapedit:
+            # Map Editor Events #####
+            if gs.mapedit:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    pos = pygame.mouse.get_pos()
+                    if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
+                        1] < 537:  # Only take action for clicks within the map
+                        column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
+                        row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
+                        print("Left Click ", pos, "Grid coordinates: ", row, column)
                         # if click is outside the map:
                         if row < 0 or column < 0 or row > map.width - 1 or column > map.height - 1:
                             print("Invalid")
@@ -413,8 +412,46 @@ def main():
                             map.grid[row][column]["name"] = brush.name
                             map.grid[row][column]["color"] = brush.color
                             map.grid[row][column]["isWall"] = brush.isWall
-                    if not gs.mapedit:
 
+                # TODO Mousewheel zoom is still very buggy. Please fix.
+                """
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                    pos = pygame.mouse.get_pos()
+                    column = (pos[0] - map.offsetY) // (map.tile_size + map.tile_margin)
+                    row = (pos[1] - map.offsetX) // (map.tile_size + map.tile_margin)
+                    print("Right Click ", pos, "Grid coordinates: ", row, column)
+                    if row == player.x and column == player.y:
+                        tile_desc = "Player"
+                        print(tile_desc)
+                    else:
+                        tile_desc = map.grid[row][column]["name"]
+                        print(tile_desc)
+
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
+                    map.tile_size = min(map.tile_size + (map.tile_size // 5), 75)
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
+                    map.tile_size = max(map.tile_size - (map.tile_size // 5), 5)
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_w:
+                        map.offsetX -= (map.tile_size + map.tile_margin)
+                    if event.key == pygame.K_s:
+                        map.offsetX += (map.tile_size + map.tile_margin)
+                    if event.key == pygame.K_a:
+                        map.offsetY -= (map.tile_size + map.tile_margin)
+                    if event.key == pygame.K_d:
+                        map.offsetY += (map.tile_size + map.tile_margin)
+                    """
+
+            # Normal Mode Events #####
+            if not gs.mapedit:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    pos = pygame.mouse.get_pos()
+                    if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
+                        1] < 537:  # Only take action for clicks within the map
+                        column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
+                        row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
+                        print("Left Click ", pos, "Grid coordinates: ", row, column)
                         if row < 0 or column < 0 or row > map.width - 1 or column > map.height - 1:
                             print("Invalid")
                         elif row == player.x and column == player.y:
@@ -425,95 +462,96 @@ def main():
                         elif map.grid[row][column] == 2:
                             map.grid[row][column] = 1
                             print("Deselected")
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                pos = pygame.mouse.get_pos()
-                if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
-                    1] < 537:  # Only take action for clicks within the minimap
-                    column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
-                    row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
-                    print("Right Click ", pos, "Grid coordinates: ", row, column)
-                    if row == player.x and column == player.y:
-                        textbox = "You see a tall, good looking... Wait a minute, that's <!blue:>you."
-                        print(tile_desc)
-                    else:
-                        tile_desc = map.grid[row][column]["name"]
-                        textbox = tile_desc
-                        print(tile_desc)
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                    pos = pygame.mouse.get_pos()
+                    if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
+                        1] < 537:  # Only take action for clicks within the minimap
+                        column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
+                        row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
+                        print("Right Click ", pos, "Grid coordinates: ", row, column)
+                        if row == player.x and column == player.y:
+                            textbox = "You see a tall, good looking... Wait a minute, that's <!blue:>you."
+                            print(tile_desc)
+                        else:
+                            tile_desc = map.grid[row][column]["name"]
+                            textbox = tile_desc
+                            print(tile_desc)
 
-            # Player Movement #####
-            if event.type == pygame.KEYDOWN:
-                multikey = pygame.key.get_pressed()
-                if event.key == pygame.K_w:
-                    print("Move Forward")
-                    player.move("forward")
-                    print("Moved to", player.x, player.y)
-                if event.key == pygame.K_s:
-                    print("Move Back")
-                    player.move("backward")
-                    print("Moved to", player.x, player.y)
-                if event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
-                    print("Strafe Left")
-                    player.strafe("left")
-                    print("Moved to", player.x, player.y)
-                elif event.key == pygame.K_a:
-                    print("Turn Right")
-                    player.rotate(-1)
-                if event.key == pygame.K_d and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
-                    print("Strafe Right")
-                    player.strafe("right")
-                    print("Moved to", player.x, player.y)
-                elif event.key == pygame.K_d:
-                    print("Turn Left")
-                    player.rotate(1)
-                if event.key == pygame.K_e:
-                    # print("Examine/Interact not yet implemented, but reserved.")
-                    print("Examining...")
-                    try:
-                        textbox = player.examine()
-                    except IndexError:
-                        print("Nope.")
-                if event.key == pygame.K_ESCAPE:
-                    print("Shutting down...")
-                    running = False
-                if event.key == pygame.K_BACKQUOTE:
-                    if not gs.mapedit:
-                        gs.mapedit = True
-                        print("Entering Map Editor Mode...")
-                    elif gs.mapedit:
-                        gs.mapedit = False
-                        print("Map Editor Disabled...")
+                # Player Movement #####
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_w:
+                        print("Move Forward")
+                        player.move("forward")
+                        print("Moved to", player.x, player.y)
+                    if event.key == pygame.K_s:
+                        print("Move Back")
+                        player.move("backward")
+                        print("Moved to", player.x, player.y)
+                    if event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
+                        print("Strafe Left")
+                        player.strafe("left")
+                        print("Moved to", player.x, player.y)
+                    elif event.key == pygame.K_a:
+                        print("Turn Right")
+                        player.rotate(-1)
+                    if event.key == pygame.K_d and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
+                        print("Strafe Right")
+                        player.strafe("right")
+                        print("Moved to", player.x, player.y)
+                    elif event.key == pygame.K_d:
+                        print("Turn Left")
+                        player.rotate(1)
+                    if event.key == pygame.K_e:
+                        # print("Examine/Interact not yet implemented, but reserved.")
+                        print("Examining...")
+                        try:
+                            textbox = player.examine()
+                        except IndexError:
+                            print("Nope.")
+                    if event.key == pygame.K_ESCAPE:
+                        print("Shutting down...")
+                        running = False
 
-                # Multikey Commands #####
-                if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_LCTRL:
-                    save()
-                if event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_LCTRL:
-                    load()
-                if event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_LCTRL:
-                    map.reset()
+                    # Multikey Commands #####
+                    if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                        save()
+                    if event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                        load()
+                    if event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                        map.reset()
 
-                if multikey[pygame.K_LCTRL] and multikey[pygame.K_m]:
-                    print("Switching Maps...")
-                    if gs.mapdisplay == 0:
-                        gs.mapdisplay = 1
-                    elif gs.mapdisplay == 1:
-                        gs.mapdisplay = 0
-                    print("Switched to Display " + str(gs.mapdisplay))
+                    if event.key == pygame.K_m and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                        print("Switching Maps...")
+                        if gs.mapdisplay == 0:
+                            gs.mapdisplay = 1
+                        elif gs.mapdisplay == 1:
+                            gs.mapdisplay = 0
+                        print("Switched to Display " + str(gs.mapdisplay))
 
-                # Map Editor Commands #####
-                if gs.mapedit:
-                    if event.key == pygame.K_1:
-                        brush.swap_brush(1)
-                    if event.key == pygame.K_2:
-                        brush.swap_brush(2)
-                    if event.key == pygame.K_3:
-                        brush.swap_brush(3)
-                    if event.key == pygame.K_4:
-                        brush.swap_brush(4)
-                    if event.key == pygame.K_5:
-                        brush.swap_brush(5)
-                    # ...
-                    if event.key == pygame.K_0:
-                        brush.swap_brush(0)
+                    # Map Editor Commands #####
+                    if gs.mapedit:
+                        if event.key == pygame.K_1:
+                            brush.swap_brush(1)
+                        if event.key == pygame.K_2:
+                            brush.swap_brush(2)
+                        if event.key == pygame.K_3:
+                            brush.swap_brush(3)
+                        if event.key == pygame.K_4:
+                            brush.swap_brush(4)
+                        if event.key == pygame.K_5:
+                            brush.swap_brush(5)
+                        # ...
+                        if event.key == pygame.K_0:
+                            brush.swap_brush(0)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKQUOTE:
+                if not gs.mapedit:
+                    gs.mapedit = True
+                    print("Entering Map Editor Mode!")
+                elif gs.mapedit:
+                    gs.mapedit = False
+                    print("Map Editor Disabled...")
+
 
         """ Begin drawing the game screen """
 
