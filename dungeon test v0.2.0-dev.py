@@ -186,7 +186,7 @@ class Player:
             blockmsg = "You're not allowed in there."
         elif wall_check > 0:
             print("Blocked")
-            blockmsg = "There is something in the way."
+            blockmsg = "There's a %s in the way." % (eval("map.grid" + next_sqr[self.rotation][x])["name"])
         else:
             blockmsg = ""
             exec(move_dir[self.rotation][x])
@@ -221,11 +221,15 @@ class Player:
             # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
         if border_chk < 0:
             print("Out of Area")
+            blockmsg = "Trying to sidestep out? Clever... But no."
         elif wall_check > 0:
             print("Blocked")
+            blockmsg = "There is something in the way."
         else:
+            blockmsg = ""
             exec(move_dir[self.rotation][x])
             exec(map_move[self.rotation][x])
+        return blockmsg
 
     def rotate(self, turn):
         cardinal = (0, -90, 180, 90)  # (0 = N), (90 = W), (180 = S), (-90 = E)
@@ -511,7 +515,7 @@ def main():
                         print("Moved to", player.x, player.y)
                     if event.key == pygame.K_s:
                         print("Move Back")
-                        player.move("backward")
+                        textbox = player.move("backward")
                         print("Moved to", player.x, player.y)
                     if event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
                         print("Strafe Left")
@@ -541,10 +545,13 @@ def main():
                     # Multikey Commands #####
                     if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                         save()
+                        textbox = "Game Saved."
                     if event.key == pygame.K_x and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                         load()
+                        textbox = "Game Loaded."
                     if event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                         map.reset()
+                        textbox = "Map Reset."
 
                     if event.key == pygame.K_m and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                         print("Switching Maps...")
