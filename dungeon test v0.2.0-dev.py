@@ -183,11 +183,15 @@ class Player:
             # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
         if border_chk < 0:
             print("Out of Area")
+            blockmsg = "You're not allowed in there."
         elif wall_check > 0:
             print("Blocked")
+            blockmsg = "There is something in the way."
         else:
+            blockmsg = ""
             exec(move_dir[self.rotation][x])
             exec(map_move[self.rotation][x])
+        return blockmsg
 
     def strafe(self, direction):
         mts = map.tile_size + map.tile_margin
@@ -413,8 +417,28 @@ def main():
                             map.grid[row][column]["color"] = brush.color
                             map.grid[row][column]["isWall"] = brush.isWall
 
-                # TODO Mousewheel zoom is still very buggy. Please fix.
-                """
+                # Map Editor Commands #####
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        brush.swap_brush(1)
+                        textbox = "Brush changed to %s" % (brush.name,)
+                    if event.key == pygame.K_2:
+                        brush.swap_brush(2)
+                        textbox = "Brush changed to %s" % (brush.name,)
+                    if event.key == pygame.K_3:
+                        brush.swap_brush(3)
+                        textbox = "Brush changed to %s" % (brush.name,)
+                    if event.key == pygame.K_4:
+                        brush.swap_brush(4)
+                        textbox = "Brush changed to %s" % (brush.name,)
+                    if event.key == pygame.K_5:
+                        brush.swap_brush(5)
+                        textbox = "Brush changed to %s" % (brush.name,)
+                    # ...
+                    if event.key == pygame.K_0:
+                        brush.swap_brush(0)
+                        textbox = "Brush changed to %s" % (brush.name,)
+
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                     pos = pygame.mouse.get_pos()
                     column = (pos[0] - map.offsetY) // (map.tile_size + map.tile_margin)
@@ -427,6 +451,8 @@ def main():
                         tile_desc = map.grid[row][column]["name"]
                         print(tile_desc)
 
+                # TODO Mousewheel zoom is still very buggy. Please fix.
+                """
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
                     map.tile_size = min(map.tile_size + (map.tile_size // 5), 75)
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
@@ -481,7 +507,7 @@ def main():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_w:
                         print("Move Forward")
-                        player.move("forward")
+                        textbox = player.move("forward")
                         print("Moved to", player.x, player.y)
                     if event.key == pygame.K_s:
                         print("Move Back")
@@ -528,30 +554,16 @@ def main():
                             gs.mapdisplay = 0
                         print("Switched to Display " + str(gs.mapdisplay))
 
-                    # Map Editor Commands #####
-                    if gs.mapedit:
-                        if event.key == pygame.K_1:
-                            brush.swap_brush(1)
-                        if event.key == pygame.K_2:
-                            brush.swap_brush(2)
-                        if event.key == pygame.K_3:
-                            brush.swap_brush(3)
-                        if event.key == pygame.K_4:
-                            brush.swap_brush(4)
-                        if event.key == pygame.K_5:
-                            brush.swap_brush(5)
-                        # ...
-                        if event.key == pygame.K_0:
-                            brush.swap_brush(0)
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKQUOTE:
                 if not gs.mapedit:
                     gs.mapedit = True
                     print("Entering Map Editor Mode!")
+                    textbox = "Entering <!blue:>Map <!blue:>Editor Mode!"
                 elif gs.mapedit:
                     gs.mapedit = False
                     print("Map Editor Disabled...")
-
+                    textbox = "Map Editor <!red:>Disabled..."
 
         """ Begin drawing the game screen """
 
