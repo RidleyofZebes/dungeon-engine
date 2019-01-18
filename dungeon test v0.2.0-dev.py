@@ -44,6 +44,7 @@ purple = (78, 48, 132)
 
 # Font(s)
 font = pygame.font.Font('res/alkhemikal.ttf', 28)
+tiny_font = pygame.font.Font('res/poco.ttf', 20)
 
 # Image(s)
 frame = pygame.image.load('res/window_wide.png').convert()
@@ -55,6 +56,7 @@ gamelogo = pygame.image.load('res/game_logo.png').convert()
 # Test starts here
 class GameState:
     def __init__(self):
+        self.running = True
         self.mapdisplay = 0
         self.INTRO_DISABLED = True
         self.titlecard = True
@@ -290,6 +292,26 @@ def message(text, *texloc, color=white):
         y += word_height  # Start on new row.
     gw.blit(textbox, (10, 542))
 
+# TODO: Rewrite button code.
+def button(button_pos, button_text, *button_width):  # Gets button X,Y and button label
+        button_padding = 25  # Set padding between button text and border
+        label = font.render(button_text, 0, white)  # Renders button label
+        button_sizex, button_sizey = label.get_size()  # Sends button label dimensions to A,B variables
+        if not button_width:
+            # Outputs the button with default padding to the screen
+            gw.blit(label, ((button_pos[0] + (button_padding / 2)), (button_pos[1] + (button_padding / 2))))
+            button_size = (button_pos[0], button_pos[1],
+                           (button_sizex + button_padding),
+                           (button_sizey + (button_padding * 0.8)))
+        else:
+            # Outputs the button with padding and centered text to the screen
+            gw.blit(label, (((button_pos[0] + ((button_width[0] + button_padding) / 2)) - (button_sizex / 2)),
+                            (button_pos[1] + (button_padding / 2))))
+            button_size = (button_pos[0], button_pos[1], (button_width[0] + button_padding),
+                           (button_sizey + (button_padding * 0.8)))
+        pygame.draw.rect(gw, white, button_size, 4)
+        return pygame.Rect(button_size)
+
 
 def titlescreen():
     while gs.titlecard:
@@ -319,14 +341,34 @@ def titlescreen():
 def mainmenu():
     gs.mainmenu = True
     while gs.mainmenu:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+        for menu_event in pygame.event.get():
+            if menu_event.type == pygame.QUIT:
+                gs.running = False
+                gs.mainmenu = False
 
-        gw.fill(black)
-        gw.blit(gamelogo, (0, 0))
-        pygame.display.update()
-    # TODO: Finish menu and add buttons.
+            gw.fill(black)
+
+            logorect = gamelogo.get_rect()
+            gw.blit(gamelogo, ((window_res[0]/2)-(logorect.width/2), 20))
+
+            version = tiny_font.render(title, 0, red)
+            version_rect = version.get_rect()
+            gw.blit(version, (5, (window_res[1]-version_rect.height)))
+
+            start = button(((window_res[0]/2-150), window_res[1]/2), "Venture Forth!", 300)
+            settings = button(((window_res[0] / 2 - 150), window_res[1] / 2 + 75), "Settings", 300)
+            credits = button(((window_res[0] / 2 - 150), window_res[1] / 2 + 300), "Credits", 300)
+
+            if menu_event.type == pygame.MOUSEBUTTONDOWN and menu_event.button == 1:
+                pos = pygame.mouse.get_pos()
+                if start.collidepoint(pos):
+                    gs.mainmenu = False
+                if settings.collidepoint(pos):
+                    pass  # TODO Make settings menu
+                if credits.collidepoint(pos):
+                    pass  # TODO make credits screen
+
+            pygame.display.update()
 
 
 def save():
@@ -367,7 +409,7 @@ def main():
     if not gs.INTRO_DISABLED:
         titlescreen()
 
-        mainmenu()
+    mainmenu()
 
     textbox = "Welcome, <!red:>%s! Your destiny awaits." % (player.name)
 
@@ -388,12 +430,11 @@ def main():
 
     tile_desc = ""  # Also an environment variable... better put it in the class, too.
 
-    running = True
-    while running:
+    while gs.running:
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
-                running = False
+                gs.running = False
 
             # Map Editor Events #####
             if gs.mapedit:
@@ -455,7 +496,7 @@ def main():
                         tile_desc = map.grid[row][column]["name"]
                         print(tile_desc)
 
-                # TODO Mousewheel zoom is still very buggy. Please fix.
+                # FIXME Mousewheel zoom is still very buggy. Please fix.
                 """
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
                     map.tile_size = min(map.tile_size + (map.tile_size // 5), 75)
@@ -561,16 +602,16 @@ def main():
                             gs.mapdisplay = 0
                         print("Switched to Display " + str(gs.mapdisplay))
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_BACKQUOTE:
-                if not gs.mapedit:
-                    gs.mapedit = True
-                    print("Entering Map Editor Mode!")
-                    textbox = "Entering <!blue:>Map <!blue:>Editor Mode!"
-                elif gs.mapedit:
-                    gs.mapedit = False
-                    print("Map Editor Disabled...")
-                    textbox = "Map Editor <!red:>Disabled..."
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKQUOTE:
+                    if not gs.mapedit:
+                        gs.mapedit = True
+                        print("Entering Map Editor Mode!")
+                        textbox = "Entering <!blue:>Map <!blue:>Editor Mode!"
+                    elif gs.mapedit:
+                        gs.mapedit = False
+                        print("Map Editor Disabled...")
+                        textbox = "Map Editor <!red:>Disabled..."
 
         """ Begin drawing the game screen """
 
