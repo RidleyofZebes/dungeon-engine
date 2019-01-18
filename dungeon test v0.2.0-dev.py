@@ -17,7 +17,7 @@ import math
 # from natural.number import ordinal  # <-- Makes the numbers look pretty - 1st, 2nd, 3rd, 4th...
 
 pygame.init()
-title = "dungeon test v0.2.0-dev"
+title = "dungeon test v0.2.1-dev"
 
 window_res = (1280, 720)
 FPS = 30
@@ -44,7 +44,8 @@ purple = (78, 48, 132)
 
 # Font(s)
 font = pygame.font.Font('res/alkhemikal.ttf', 28)
-tiny_font = pygame.font.Font('res/poco.ttf', 20)
+stats_font = pygame.font.Font('res/poco.ttf', 20)
+tiny_font = pygame.font.Font('res/poco.ttf', 10)
 
 # Image(s)
 frame = pygame.image.load('res/window_wide.png').convert()
@@ -59,6 +60,7 @@ class GameState:
         self.running = True
         self.mapdisplay = 0
         self.INTRO_DISABLED = True
+        self.DISPLAY_VERSION = True
         self.titlecard = True
         self.mainmenu = False
         self.mapedit = False
@@ -351,21 +353,27 @@ def mainmenu():
             logorect = gamelogo.get_rect()
             gw.blit(gamelogo, ((window_res[0]/2)-(logorect.width/2), 20))
 
-            version = tiny_font.render(title, 0, red)
+            version = stats_font.render(title, 0, red)
             version_rect = version.get_rect()
             gw.blit(version, (5, (window_res[1]-version_rect.height)))
 
-            start = button(((window_res[0]/2-150), window_res[1]/2), "Venture Forth!", 300)
-            settings = button(((window_res[0] / 2 - 150), window_res[1] / 2 + 75), "Settings", 300)
-            credits = button(((window_res[0] / 2 - 150), window_res[1] / 2 + 300), "Credits", 300)
+            start = button(((window_res[0]/2-150), window_res[1]/2 - 100), "Venture Forth!", 300)
+            loadgame = button(((window_res[0]/2-150), window_res[1]/2 - 30), "Continue your Adventure", 300)
+            editor = button(((window_res[0]/2-150), window_res[1]/2 + 40), "Map Editor", 300)
+            settings = button(((window_res[0] / 2 - 150), window_res[1] / 2 + 110), "Settings", 300)
+            credit = button(((window_res[0] / 2 - 75), window_res[1] / 2 + 300), "Credits", 150)
 
             if menu_event.type == pygame.MOUSEBUTTONDOWN and menu_event.button == 1:
                 pos = pygame.mouse.get_pos()
                 if start.collidepoint(pos):
                     gs.mainmenu = False
+                if loadgame.collidepoint(pos):
+                    pass  # TODO Make settings menu
+                if editor.collidepoint(pos):
+                    pass  # TODO Make settings menu
                 if settings.collidepoint(pos):
                     pass  # TODO Make settings menu
-                if credits.collidepoint(pos):
+                if credit.collidepoint(pos):
                     pass  # TODO make credits screen
 
             pygame.display.update()
@@ -699,6 +707,12 @@ def main():
             gw.blit(minimap, (1014, 10))
 
             gw.blit(statmenu, (1014, 271))
+
+            # Display game version
+            if gs.DISPLAY_VERSION:
+                version = tiny_font.render(title, 0, red)
+                version_rect = version.get_rect()
+                gw.blit(version, (2, (window_res[1]-version_rect.height)))
 
         """ Second display view """
         # Needs work, supposed to display map scalable and scrollable. For now just barely managable (somehow).

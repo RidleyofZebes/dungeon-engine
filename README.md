@@ -3,11 +3,15 @@ A simple dungeon crawl style RPG written in python with PyGame, name subject to 
 
 
 ### changelog:
+##### v0.2.1-dev
+  * Added intro, main menu, game states
+  
 ##### v0.2.0-dev
   * Massive re-write of entire game
   * Basic tile-based dungeon crawl experience
   * Skeletal map editor
-  
+   
+---
    
 ##### v0.1.2-dev
   * Your hero will now level up with XP. 
