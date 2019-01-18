@@ -63,6 +63,7 @@ class GameState:
         self.DISPLAY_VERSION = True
         self.titlecard = True
         self.mainmenu = False
+        self.newgame = False
         self.mapedit = False
 
 
@@ -255,8 +256,7 @@ class Player:
         return newmsg
 
 
-
-def message(text, *texloc, color=white):
+def message(text, *texloc, color=white):  # FIXME Word highlighting syntax is weird. Needs re-written.
     textbox = pygame.Surface((999, 168))
     defaultcolor = color
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
@@ -294,6 +294,7 @@ def message(text, *texloc, color=white):
         y += word_height  # Start on new row.
     gw.blit(textbox, (10, 542))
 
+
 # TODO: Rewrite button code.
 def button(button_pos, button_text, *button_width):  # Gets button X,Y and button label
         button_padding = 25  # Set padding between button text and border
@@ -315,7 +316,7 @@ def button(button_pos, button_text, *button_width):  # Gets button X,Y and butto
         return pygame.Rect(button_size)
 
 
-def titlescreen():
+def titlescreen():  # FIXME: takes way too long to fade in/out.
     while gs.titlecard:
         pygame.time.wait(2000)
         fadein = True
@@ -366,11 +367,12 @@ def mainmenu():
             if menu_event.type == pygame.MOUSEBUTTONDOWN and menu_event.button == 1:
                 pos = pygame.mouse.get_pos()
                 if start.collidepoint(pos):
+                    gs.newgame = True
                     gs.mainmenu = False
                 if loadgame.collidepoint(pos):
-                    pass  # TODO Make settings menu
+                    gs.mainmenu = False
                 if editor.collidepoint(pos):
-                    pass  # TODO Make settings menu
+                    pass  # FIXME Do we really need a separate map editor?
                 if settings.collidepoint(pos):
                     pass  # TODO Make settings menu
                 if credit.collidepoint(pos):
@@ -378,6 +380,10 @@ def mainmenu():
 
             pygame.display.update()
 
+def newgame():
+    print("This is where I'd put my character creation screen... if I had one.")
+    pass
+    # TODO Character creation screen with statgentest.py
 
 def save():
     print("Saving...")
@@ -419,6 +425,10 @@ def main():
 
     mainmenu()
 
+    if gs.newgame:
+        map.reset()
+        newgame()
+
     textbox = "Welcome, <!red:>%s! Your destiny awaits." % (player.name)
 
     RAYS = 360  # Should be 360!
@@ -436,6 +446,7 @@ def main():
         coscalc = math.cos(x/(180/math.pi))
         costable.append(coscalc)
 
+    # FIXME: This variable seems redundant, see about incorporating it into a new 'tile' CLASS.
     tile_desc = ""  # Also an environment variable... better put it in the class, too.
 
     while gs.running:
@@ -448,8 +459,8 @@ def main():
             if gs.mapedit:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     pos = pygame.mouse.get_pos()
-                    if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
-                        1] < 537:  # Only take action for clicks within the map
+                    # Only take action for clicks within the map
+                    if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[1] < 537:
                         column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
                         row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
                         print("Left Click ", pos, "Grid coordinates: ", row, column)
@@ -581,7 +592,6 @@ def main():
                         print("Turn Left")
                         player.rotate(1)
                     if event.key == pygame.K_e:
-                        # print("Examine/Interact not yet implemented, but reserved.")
                         print("Examining...")
                         try:
                             textbox = player.examine()
@@ -589,7 +599,7 @@ def main():
                             print("Nope.")
                     if event.key == pygame.K_ESCAPE:
                         print("Shutting down...")
-                        running = False
+                        gs.running = False
 
                     # Multikey Commands #####
                     if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_LCTRL:
@@ -610,6 +620,7 @@ def main():
                             gs.mapdisplay = 0
                         print("Switched to Display " + str(gs.mapdisplay))
 
+            # Map editor toggle. Needs to be in it's own indentation or else it cycles too quickly.
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKQUOTE:
                     if not gs.mapedit:
@@ -632,7 +643,7 @@ def main():
             viewscreen = pygame.Surface((999, 527))
             minimap = pygame.Surface((256, 256))
 
-            statmenu = pygame.Surface((257, 439))
+            statmenu = pygame.Surface((257, 439))  # TODO Display relevant information
 
             """ Draw the map """
 
@@ -643,7 +654,7 @@ def main():
                         map.grid[x][y]["isVisible"] = 0
             # Determine which squares are visible...
             for i in range(0, RAYS + 1, STEP):
-                ax = sintable[i]  # Get precalculated value sin(x / (180 / pi))
+                ax = sintable[i]  # Get value sin(x / (180 / pi))
                 ay = costable[i]  # cos(x / (180 / pi))
                 x = player.x  # Player's x
                 y = player.y  # Player's y
@@ -653,7 +664,8 @@ def main():
                     if x < 0 or y < 0 or x > map.width or y > map.height:  # If ray is out of range
                         break
                     try:
-                        map.grid[int(round(x))][int(round(y))].update({"isDiscovered": 1, "isVisible": 1})  # Discover the tile and make it visible
+                        # Discover the tile and make it visible if it exists
+                        map.grid[int(round(x))][int(round(y))].update({"isDiscovered": 1, "isVisible": 1})
                     except IndexError:
                         break
                     if map.grid[int(round(x))][int(round(y))]["isWall"] == 1:  # Stop ray if it hit
@@ -663,8 +675,7 @@ def main():
                 for y in range(map.width):
                     tile = pygame.Surface((map.tile_size, map.tile_size))
                     tile.fill((map.grid[x][y].get("color")))
-                    if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get(
-                            "isDiscovered") == 1:  # Not useful for Map Editor, but VERY YES in Game Engine.
+                    if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get("isDiscovered") == 1:
                         tile.set_alpha(64)
                     if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get("isDiscovered") == 0:
                         tile.fill(black)
@@ -680,8 +691,7 @@ def main():
                 for y in range(map.width):
                     tile = pygame.Surface((1, 1))
                     tile.fill((map.grid[x][y].get("color")))
-                    # Not useful for Map Editor, but VERY YES in Game Engine.
-                    if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get( "isDiscovered") == 1:
+                    if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get("isDiscovered") == 1:
                         tile.set_alpha(64)
                     if map.grid[x][y].get("isVisible") == 0 and map.grid[x][y].get("isDiscovered") == 0:
                         tile.fill(black)
@@ -694,9 +704,9 @@ def main():
                                        (player.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
 
             """ Tile Descriptions? """
-            tiledescrect = font.render(tile_desc, False, black)
-            descrect = tiledescrect.get_rect()
-            descrect.center = (658, 300)
+            # tiledescrect = font.render(tile_desc, False, black)
+            # descrect = tiledescrect.get_rect()
+            # descrect.center = (658, 300)
             # gw.blit(tiledescrect, descrect)
 
             message(textbox)
@@ -715,7 +725,8 @@ def main():
                 gw.blit(version, (2, (window_res[1]-version_rect.height)))
 
         """ Second display view """
-        # Needs work, supposed to display map scalable and scrollable. For now just barely managable (somehow).
+        # TODO: Either trash this or fix it.
+        # Supposed to display map scalable and scrollable. For now just barely manageable (somehow).
         if gs.mapdisplay == 1:  # Supposed to be the map screen. Needs massive alterations.
             for x in range(map.height):
                 for y in range(map.width):
