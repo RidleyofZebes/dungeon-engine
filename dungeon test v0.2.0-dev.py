@@ -1,7 +1,7 @@
 """-------------------------------------------------------------------------#
-# "Dungeon Test"                                                             #
+# "Dungeon Engine"                                                          #
 # By Douglas J. Honeycutt                                                   #
-# https://withacact.us/ | https://github.com/RidleyofZebes/hero-simulator   #
+# https://withacact.us/ | https://github.com/RidleyofZebes/dungeon-engine   #
 #-------------------------------------------------------------------------"""
 
 
@@ -17,7 +17,7 @@ import math
 # from natural.number import ordinal  # <-- Makes the numbers look pretty - 1st, 2nd, 3rd, 4th...
 
 pygame.init()
-title = "dungeon test v0.2.1-dev"
+title = "dungeon engine v0.2.1-dev"
 
 window_res = (1280, 720)
 FPS = 30
@@ -702,6 +702,15 @@ def main():
             maparrow = pygame.transform.rotate(player.icon, player.rotation)
             viewscreen.blit(maparrow, ((player.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
                                        (player.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
+
+            """ Draw the Info Box """
+            heroname = font.render(player.name, 0, white)
+            heroname_rect = heroname.get_rect()
+            heroname_rect.center = (257/2, 20)
+            statmenu.blit(heroname, heroname_rect)
+
+            # TODO: Add HP bar below name
+            # TODO: Add player stats (STR, DEX, CON, etc.) below HP bar
 
             """ Tile Descriptions? """
             # tiledescrect = font.render(tile_desc, False, black)
