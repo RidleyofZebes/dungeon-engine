@@ -144,7 +144,19 @@ class Brush:
 
 class Player:
     def __init__(self):
-        self.name = "Nameless"
+        self.name = "Thorgath of Udd"
+        self.race = "Half-Orc"
+        self.job = "Fighter"
+        self.stats = {"str": 12,
+                      "dex": 10,
+                      "con": 15,
+                      "wis": 8,
+                      "cha": 11,
+                      "lck": 10}
+        self.xp = 0
+        self.lvl = 1
+        self.gold = 0
+        self.inventory = {}
         self.x = 0
         self.y = 0
         self.viewrange = 8
