@@ -7,14 +7,19 @@
 
 # Imports...
 import os
-# import sys
+import sys
 import pickle  # <-- The thing that lets the save/load function work. Favorite module name.
-import re  # <-- RegEx stuffs module
+import re
 import pygame
 import math
-# from res import pygame_textinput
-# from random import randint  # <-- LulZ S000 RaNdUm
+import random
+import json
+import inflect
+
+# from res import pygame_textinput  # <-- For entering player name
 # from natural.number import ordinal  # <-- Makes the numbers look pretty - 1st, 2nd, 3rd, 4th...
+
+p = inflect.engine()
 
 pygame.init()
 title = "dungeon engine v0.2.1-dev"
@@ -43,15 +48,20 @@ blue = (0, 0, 255)
 purple = (78, 48, 132)
 
 # Font(s)
-font = pygame.font.Font('res/alkhemikal.ttf', 28)
-stats_font = pygame.font.Font('res/poco.ttf', 20)
-tiny_font = pygame.font.Font('res/poco.ttf', 10)
+font = pygame.font.Font('res/fonts/alkhemikal.ttf', 28)
+stats_font = pygame.font.Font('res/fonts/poco.ttf', 20)
+tiny_font = pygame.font.Font('res/fonts/poco.ttf', 10)
 
 # Image(s)
-frame = pygame.image.load('res/window_wide.png').convert()
-heroico = pygame.image.load('res/maphero.png')
-titlecard = pygame.image.load('res/studio_logo.png').convert()
-gamelogo = pygame.image.load('res/game_logo.png').convert()
+heroico = pygame.image.load('res/images/maphero.png')
+mobico = pygame.image.load('res/images/mapenemy.png')
+titlecard = pygame.image.load('res/images/studio_logo.png').convert()
+gamelogo = pygame.image.load('res/images/game_logo2.png').convert()
+
+# .JSON(s)
+monstersfile = 'res/json/monsters.json'
+itemsfile = 'res/json/items.json'
+tilesfile = 'res/json/tiles.json'
 
 
 # Test starts here
@@ -65,6 +75,20 @@ class GameState:
         self.mainmenu = False
         self.newgame = False
         self.mapedit = False
+
+
+class Entities:
+    def __init__(self):
+        self.mobs = []
+        self.items = []
+        self.entityID = 0
+
+    def showentities(self):
+        itemlist = [(item.name + " ID:" + item.ID) for item in self.items]
+        moblist = [(mob.name + " ID:" + mob.ID) for mob in self.mobs]
+        print("Mobs:\n" + str(moblist) + "\n"
+              "Items:\n" + str(itemlist) + "\n"
+              "Next entity ID: " + str(self.entityID))
 
 
 class Map:
@@ -95,6 +119,26 @@ class Map:
              for x in range(self.width)]
             for y in range(self.height)]
         print("Map reset")
+
+
+# TODO: Camera Class keeps track of camera position and zoom.
+""" 
+class Camera:
+    def __init__(self):
+        self.positionY = 486
+        self.positionX = 250
+"""
+
+
+# TODO: Tile class stores data for tile IDs instead of per-tile data.
+"""
+class Tile:
+    def __init__(self):
+        self.ID = swap
+        self.name = "Endless Void"
+        self.color = (0, 0, 0)  # Black
+        self.isWall = 2
+"""
 
 
 class Brush:
@@ -144,24 +188,27 @@ class Brush:
 
 class Player:
     def __init__(self):
-        self.name = "Thorgath of Udd"
-        self.race = "Half-Orc"
-        self.job = "Fighter"
-        self.stats = {"str": 12,
-                      "dex": 10,
-                      "con": 15,
-                      "wis": 8,
-                      "cha": 11,
-                      "lck": 10}
-        self.xp = 0
-        self.lvl = 1
-        self.gold = 0
-        self.inventory = {}
+        """ [Game Data] """
         self.x = 0
         self.y = 0
         self.viewrange = 8
         self.icon = heroico
         self.rotation = 0
+        """ [Player Data] """
+        self.name = "Thorgath of Udd"
+        self.race = "Half-Orc"
+        self.job = "Fighter"
+        self.stat = {"str": 12, "dex": 10, "con": 15, "wis": 8, "cha": 11, "lck": 10}
+        self.max_hp = (self.stat['con'] * 8)
+        self.xp = 0
+        self.lvl = 1
+        self.hp = self.max_hp
+        self.default_weapon = Item(None, "Fist", "weapon", True, 0, [0, 2])
+        self.weapon = self.default_weapon
+        self.armor = []
+        self.inventory = []
+        self.gold = 0
+        self.max_carry_weight = (self.stat['con'] + self.stat['str']) * 10
 
 
 
@@ -267,6 +314,145 @@ class Player:
         newmsg = eval("map.grid" + next_sqr[self.rotation])["name"]
         return newmsg
 
+    def additem(self, selection, qty=1):
+        for x in range(0, qty):
+            token = createitem(selection)
+            self.pickupitem(token)
+
+    def pickupitem(self, selection, qty=1):
+        newitem = next((item for item in entities.items if item.ID == selection), None)
+        if newitem:
+            itemname = p.plural(newitem.name, qty)
+            self.inventory.append(newitem)
+            print("You pick up %d %s" % (qty, itemname))
+        else:
+            print("There's nothing there.")
+
+    def dropitem(self, selection, qty=1):
+        olditem = next((item for item in entities.items if item.ID == selection), None)
+        if olditem:
+            itemname = p.plural(olditem.name, qty)
+            self.inventory.remove(olditem)
+            print("You drop %d %s" % (qty, itemname))
+        else:
+            print("You can't drop that.")
+
+    def showinventory(self):
+        currentweight = 0
+        inventory = []
+        print("Current inventory:")
+        for thing in self.inventory:
+            currentweight += thing.weight
+            qty = sum(item.name == thing.name for item in self.inventory)
+            inventory.append("%s x%d %dea. %dlbs" % (thing.name, qty, thing.weight, thing.weight * qty))
+        inventory = list(dict.fromkeys(inventory))
+        print(*inventory, sep='\n')
+        print("Weighing %dlbs of maximum %dlbs" % (currentweight, self.max_carry_weight))
+        if currentweight > self.max_carry_weight:
+            print("You are encumbered")
+
+    def equip(self, equip_item):
+        for thing in self.inventory:
+            if thing.ID == equip_item or thing.name == equip_item and thing.isEquipable:
+                self.weapon = thing
+                print("You equip the %s" % self.weapon.name)
+                break
+            else:
+                print("You can't equip a %s!" % thing.name)
+
+    def unequip(self, equipment):
+        if equipment == self.weapon:
+            print("You put away your %s." % self.weapon.name)
+            self.weapon = self.default_weapon
+        else:
+            print("You currently don't have %s equipped." % equipment.name)
+
+    def attack(self, target):
+        target = next((mob for mob in entities.mobs if mob.ID == target), None)
+        print("Attacking %s with %s" % (target.name, self.weapon.name))
+        atkdamage = random.randint(self.weapon.damage[0], self.weapon.damage[1])
+        target.hp -= atkdamage
+        print("You deal %d damage to the %s leaving it with %d health." % (atkdamage, target.name, target.hp))
+        if not target.isHostile:
+            x = random.randint(0, 1)
+            if x == 0:
+                target.isHostile = True
+                print("The %s becomes aggressive towards you!" % target.name)
+            if x == 1:
+                print("The %s looks at you uncertainly." % target.name)
+        if target.hp >= 0 and target.isHostile:
+            target.attack(self)
+        if target.hp <= 0:
+            print("The %s is dead." % target.name)
+
+
+class Monster:
+    def __init__(self, ID, name, hp, isHostile, weapon, damage):
+        self.ID = ID
+        self.icon = mobico
+        self.rotation = 0
+        self.name = name
+        self.hp = hp
+        self.isHostile = isHostile
+        self.weapon = weapon
+        self.damage = damage
+        self.x = 5
+        self.y = 5
+
+    def attack(self, target):
+        print("The %s attacks %s with its %s" % (self.name, target.name, self.weapon))
+        atkdamage = random.randint(self.damage[0], self.damage[1])
+        target.hp -= atkdamage
+        print("The %s deals %d damage to %s leaving them with %d health." %
+              (self.name, atkdamage, target.name, target.hp))
+
+
+class Item:
+    def __init__(self, ID, name, slot, isEquipable, weight, damage):
+        self.ID = ID
+        self.name = name
+        self.slot = slot
+        self.isEquipable = isEquipable
+        self.weight = weight
+        self.damage = damage
+
+
+def createmonster(monster, qty=1):
+    with open(monstersfile, 'r') as data:
+        monsters = json.load(data)
+    for x in range(0, qty):
+        token = str(entities.entityID)
+        if monster in monsters:
+            entities.mobs.append(Monster(token,
+                                         monsters[monster]['name'],
+                                         monsters[monster]['hp'],
+                                         monsters[monster]['isHostile'],
+                                         monsters[monster]['weapon'],
+                                         monsters[monster]['damage']))
+            print("Created %s" % monster)
+            entities.entityID += 1
+
+        else:
+            print("%s is unavailable." % monster)
+    return token
+
+
+def createitem(itemname):
+    with open(itemsfile, 'r') as data:
+        items = json.load(data)
+    token = str(entities.entityID)
+    if itemname in items:
+        entities.items.append(Item(token,
+                                   items[itemname]['name'],
+                                   items[itemname]['slot'],
+                                   items[itemname]['isEquipable'],
+                                   items[itemname]['weight'],
+                                   items[itemname]['damage']))
+        print("Created %s" % itemname)
+        entities.entityID += 1
+        return token
+    else:
+        print("%s is unavailable." % itemname)
 
 def message(text, *texloc, color=white):  # FIXME Word highlighting syntax is weird. Needs re-written.
     textbox = pygame.Surface((999, 168))
@@ -364,7 +550,7 @@ def mainmenu():
             gw.fill(black)
 
             logorect = gamelogo.get_rect()
-            gw.blit(gamelogo, ((window_res[0]/2)-(logorect.width/2), 20))
+            gw.blit(gamelogo, ((window_res[0]/2)-(logorect.width/2), 40))
 
             version = stats_font.render(title, 0, red)
             version_rect = version.get_rect()
@@ -427,6 +613,7 @@ map = Map()
 player = Player()
 gs = GameState()
 brush = Brush()
+entities = Entities()
 
 load()
 
@@ -603,6 +790,10 @@ def main():
                     elif event.key == pygame.K_d:
                         print("Turn Left")
                         player.rotate(1)
+                    if event.key == pygame.K_j:
+                        print("game testing")
+                        createmonster('goblin')
+                        print("Moved to", player.x, player.y)
                     if event.key == pygame.K_e:
                         print("Examining...")
                         try:
@@ -714,6 +905,12 @@ def main():
             maparrow = pygame.transform.rotate(player.icon, player.rotation)
             viewscreen.blit(maparrow, ((player.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
                                        (player.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
+
+            """ Draw the Enemy Icons """
+            for enemy in entities.mobs:
+                maparrow = pygame.transform.rotate(enemy.icon, enemy.rotation)
+                viewscreen.blit(maparrow, ((enemy.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
+                                           (enemy.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
 
             """ Draw the Info Box """
             heroname = font.render(player.name, 0, white)
