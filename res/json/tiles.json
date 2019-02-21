@@ -1,0 +1,22 @@
+{
+  "0": {
+  "name": "Endless Void",
+  "color": [0, 0, 0],
+  "isWall": 2
+  },
+  "1": {
+    "name": "Stone Floor",
+    "color": [169, 169, 169],
+    "isWall": 0
+  },
+  2: {
+    "name": "Stone Wall",
+    "color": [0, 255, 0],
+    "isWall": 1
+  },
+  3: {
+    "name": "Custom Block",
+    "color": [78, 48, 132],
+    "isWall": 0
+  }
+}
