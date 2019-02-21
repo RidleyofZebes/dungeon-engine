@@ -137,6 +137,7 @@ class Tile:
         self.ID = swap
         self.name = "Endless Void"
         self.color = (0, 0, 0)  # Black
+        self.descript = " 
         self.isWall = 2
 """
 
@@ -209,9 +210,6 @@ class Player:
         self.inventory = []
         self.gold = 0
         self.max_carry_weight = (self.stat['con'] + self.stat['str']) * 10
-
-
-
         # self.killcount = 0
         # self.encounter = 0
         # self.gametime = 0
@@ -221,78 +219,46 @@ class Player:
 
     def move(self, direction):
         mts = map.tile_size + map.tile_margin
-        move_dir = {0:   ['self.x -= 1', 'self.x += 1'],
-                    180: ['self.x += 1', 'self.x -= 1'],
-                    -90: ['self.y += 1', 'self.y -= 1'],
-                    90:  ['self.y -= 1', 'self.y += 1']}
-        next_sqr = {0:   ['[self.x - 1][self.y]', '[self.x + 1][self.y]'],
-                    180: ['[self.x + 1][self.y]', '[self.x - 1][self.y]'],
-                    -90: ['[self.x][self.y + 1]', '[self.x][self.y - 1]'],
-                    90:  ['[self.x][self.y - 1]', '[self.x][self.y + 1]']}
-        broken_thing = {0:   ['self.x - 1', 'self.x + 1'],
-                        180: ['self.x + 1', 'self.x - 1'],
-                        -90: ['self.y + 1', 'self.y - 1'],
-                        90:  ['self.y - 1', 'self.y + 1']}
-        map_move = {0:   ['map.offsetX += mts', 'map.offsetX -= mts'],
-                    180: ['map.offsetX -= mts', 'map.offsetX += mts'],
-                    -90: ['map.offsetY -= mts', 'map.offsetY += mts'],
-                    90:  ['map.offsetY += mts', 'map.offsetY -= mts']}
-        x = 0 if direction == "forward" else 1
+        move_dir = {0:   [-1, 0],
+                    180: [1, 0],
+                    -90: [0, 1],
+                    90:  [0, -1]}
         try:
-            wall_check = eval("map.grid" + next_sqr[self.rotation][x])["isWall"]
-            border_chk = eval(broken_thing[self.rotation][x])
+            next_x = self.x + move_dir[self.rotation][0]
+            next_y = self.y + move_dir[self.rotation][1]
+            next_square = map.grid[next_x][next_y]
+            wall_check = next_square["isWall"]
+            border_chk = 1
         except IndexError:
-            border_chk = -1  # This is a hack. I am ashamed of it, but it works. Too tired to fix it right now.
-            # It's supposed to check if the next square is out of bounds. In this scenario, it throws an error and
-            # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
-        if border_chk < 0:
+            border_chk = -1
+        if border_chk < 0 or next_x < 0 or next_y < 0:
             print("Out of Area")
-            blockmsg = "You're not allowed in there."
+            blockmsg = "You dare not tread on the <!green:>Fathomless <!green:>Void."
         elif wall_check > 0:
             print("Blocked")
-            blockmsg = "There's a %s in the way." % (eval("map.grid" + next_sqr[self.rotation][x])["name"])
+            blockmsg = "There's a %s in the way." % (next_square["name"])
         else:
             blockmsg = ""
-            exec(move_dir[self.rotation][x])
-            exec(map_move[self.rotation][x])
-        return blockmsg
-
-    def strafe(self, direction):
-        mts = map.tile_size + map.tile_margin
-        move_dir = {0:   ['self.y += 1', 'self.y -= 1'],
-                    180: ['self.y -= 1', 'self.y += 1'],
-                    -90: ['self.x += 1', 'self.x -= 1'],
-                    90:  ['self.x -= 1', 'self.x += 1']}
-        next_sqr = {0:   ['[self.x][self.y + 1]', '[self.x][self.y - 1]'],
-                    180: ['[self.x][self.y - 1]', '[self.x][self.y + 1]'],
-                    -90: ['[self.x + 1][self.y]', '[self.x - 1][self.y]'],
-                    90:  ['[self.x - 1][self.y]', '[self.x + 1][self.y]']}
-        broken_thing = {0:   ['self.y + 1', 'self.y - 1'],
-                        180: ['self.y - 1', 'self.y + 1'],
-                        -90: ['self.x + 1', 'self.x - 1'],
-                        90:  ['self.x - 1', 'self.x + 1']}
-        map_move = {0:   ['map.offsetY -= mts', 'map.offsetY += mts'],
-                    180: ['map.offsetY += mts', 'map.offsetY -= mts'],
-                    -90: ['map.offsetX -= mts', 'map.offsetX += mts'],
-                    90:  ['map.offsetX += mts', 'map.offsetX -= mts']}
-        x = 0 if direction == "right" else 1
-        try:
-            wall_check = eval("map.grid" + next_sqr[self.rotation][x])["isWall"]
-            border_chk = eval(broken_thing[self.rotation][x])
-        except IndexError:
-            border_chk = -1  # This is a hack. I am ashamed of it, but it works. Too tired to fix it right now.
-            # It's supposed to check if the next square is out of bounds. In this scenario, it throws an error and
-            # acts like it were the top-right corner. It technically works anyway. Don't do this. It's not healthy.
-        if border_chk < 0:
-            print("Out of Area")
-            blockmsg = "Trying to sidestep out? Clever... But no."
-        elif wall_check > 0:
-            print("Blocked")
-            blockmsg = "There is something in the way."
-        else:
-            blockmsg = ""
-            exec(move_dir[self.rotation][x])
-            exec(map_move[self.rotation][x])
+            if direction == "forward":
+                self.x += move_dir[self.rotation][0]
+                self.y += move_dir[self.rotation][1]
+                map.offsetX -= move_dir[self.rotation][0]*mts
+                map.offsetY -= move_dir[self.rotation][1]*mts
+            if direction == "backward":
+                self.x -= move_dir[self.rotation][0]
+                self.y -= move_dir[self.rotation][1]
+                map.offsetX += move_dir[self.rotation][0]*mts
+                map.offsetY += move_dir[self.rotation][1]*mts
+            if direction == "strafe_left":  # FIXME: Strafe code is broken
+                self.x -= move_dir[self.rotation][1]
+                self.y -= move_dir[self.rotation][0]
+                map.offsetX += move_dir[self.rotation][1]*mts
+                map.offsetY += move_dir[self.rotation][0]*mts
+            if direction == "strafe_left":
+                self.x += move_dir[self.rotation][1]
+                self.y += move_dir[self.rotation][0]
+                map.offsetX -= move_dir[self.rotation][1]*mts
+                map.offsetY -= move_dir[self.rotation][0]*mts
         return blockmsg
 
     def rotate(self, turn):
@@ -458,6 +424,18 @@ def createitem(itemname):
         return token
     else:
         print("%s is unavailable." % itemname)
+
+
+# def createtile(tile_id):
+#     with open(tilesfile, 'r') as data:
+#         tiles = json.load(data)
+#     location = (x, y)
+#     map.tiles.appent(Tile(location,
+#                           items[itemname]['name'],
+#                           items[itemname]['slot'],
+#                           items[itemname]['isEquipable'],
+#                           items[itemname]['weight'],
+#                           items[itemname]['damage']))
 
 def message(text, *texloc, color=white):  # FIXME Word highlighting syntax is weird. Needs re-written.
     textbox = pygame.Surface((999, 168))
@@ -783,14 +761,14 @@ def main():
                         print("Moved to", player.x, player.y)
                     if event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
                         print("Strafe Left")
-                        player.strafe("left")
+                        player.move("strafe_left")
                         print("Moved to", player.x, player.y)
                     elif event.key == pygame.K_a:
                         print("Turn Right")
                         player.rotate(-1)
                     if event.key == pygame.K_d and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
                         print("Strafe Right")
-                        player.strafe("right")
+                        player.move("strafe_right")
                         print("Moved to", player.x, player.y)
                     elif event.key == pygame.K_d:
                         print("Turn Left")
