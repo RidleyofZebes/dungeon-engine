@@ -387,7 +387,7 @@ class Player:
 
 
 class Monster:
-    def __init__(self, ID, name, hp, isHostile, weapon, damage):
+    def __init__(self, ID, name, hp, isHostile, weapon, damage, x, y):
         self.ID = ID
         self.icon = mobico
         self.rotation = 0
@@ -396,8 +396,8 @@ class Monster:
         self.isHostile = isHostile
         self.weapon = weapon
         self.damage = damage
-        self.x = 5
-        self.y = 5
+        self.x = x
+        self.y = y
 
     def attack(self, target):
         print("The %s attacks %s with its %s" % (self.name, target.name, self.weapon))
@@ -420,7 +420,10 @@ class Item:
 def createmonster(monster, qty=1):
     with open(monstersfile, 'r') as data:
         monsters = json.load(data)
+    if monster == 'random':
+        monster = random.choice(list(monsters.keys()))
     for x in range(0, qty):
+        spawn_xy = (random.randint(0, map.width-1), random.randint(0, map.height-1))
         token = str(entities.entityID)
         if monster in monsters:
             entities.mobs.append(Monster(token,
@@ -428,7 +431,9 @@ def createmonster(monster, qty=1):
                                          monsters[monster]['hp'],
                                          monsters[monster]['isHostile'],
                                          monsters[monster]['weapon'],
-                                         monsters[monster]['damage']))
+                                         monsters[monster]['damage'],
+                                         spawn_xy[0],
+                                         spawn_xy[1]))
             print("Created %s" % monster)
             entities.entityID += 1
 
@@ -790,10 +795,7 @@ def main():
                     elif event.key == pygame.K_d:
                         print("Turn Left")
                         player.rotate(1)
-                    if event.key == pygame.K_j:
-                        print("game testing")
-                        createmonster('goblin')
-                        print("Moved to", player.x, player.y)
+
                     if event.key == pygame.K_e:
                         print("Examining...")
                         try:
@@ -814,6 +816,11 @@ def main():
                     if event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                         map.reset()
                         textbox = "Map Reset."
+
+                    """ Game Testing Commands """
+                    if event.key == pygame.K_F1:
+                        print("Create Random Monster")
+                        createmonster('random')
 
                     if event.key == pygame.K_m and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                         print("Switching Maps...")
@@ -908,9 +915,10 @@ def main():
 
             """ Draw the Enemy Icons """
             for enemy in entities.mobs:
-                maparrow = pygame.transform.rotate(enemy.icon, enemy.rotation)
-                viewscreen.blit(maparrow, ((enemy.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
-                                           (enemy.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
+                if map.grid[enemy.x][enemy.y].get("isVisible") == 1:
+                    maparrow = pygame.transform.rotate(enemy.icon, enemy.rotation)
+                    viewscreen.blit(maparrow, ((enemy.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
+                                               (enemy.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
 
             """ Draw the Info Box """
             heroname = font.render(player.name, 0, white)
