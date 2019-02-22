@@ -15,6 +15,7 @@ import math
 import random
 import json
 import inflect
+import pprint
 
 # from res import pygame_textinput  # <-- For entering player name
 # from natural.number import ordinal  # <-- Makes the numbers look pretty - 1st, 2nd, 3rd, 4th...
@@ -261,7 +262,6 @@ class Player:
             self.move("forward")
             self.rotate(1)
 
-
     def rotate(self, turn):
         cardinal = (0, -90, 180, 90)  # (0 = N), (90 = W), (180 = S), (-90 = E)
         for x in range(len(cardinal)):
@@ -280,7 +280,12 @@ class Player:
                     90:  [0, -1]}
         next_x = self.x + move_dir[self.rotation][0]
         next_y = self.y + move_dir[self.rotation][1]
-        newmsg = map.grid[next_x][next_y]["name"]
+        mob = next((mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y)), 0)
+        if mob == 0:
+            newmsg = map.grid[next_x][next_y]["name"]
+        else:
+            mob = next(mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y))
+            newmsg = mob.examine
         return newmsg
 
     def additem(self, selection, qty=1):
@@ -356,7 +361,7 @@ class Player:
 
 
 class Monster:
-    def __init__(self, ID, name, hp, examine, weapon, damage, isHostile, x, y):
+    def __init__(self, ID, name, examine, hp, weapon, damage, isHostile, x, y):
         self.ID = ID
         self.icon = mobico
         self.rotation = 0
