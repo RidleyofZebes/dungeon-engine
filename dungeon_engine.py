@@ -249,17 +249,18 @@ class Player:
                 self.y -= move_dir[self.rotation][1]
                 map.offsetX += move_dir[self.rotation][0]*mts
                 map.offsetY += move_dir[self.rotation][1]*mts
-            if direction == "strafe_left":  # FIXME: Strafe code is broken
-                self.x -= move_dir[self.rotation][1]
-                self.y -= move_dir[self.rotation][0]
-                map.offsetX += move_dir[self.rotation][1]*mts
-                map.offsetY += move_dir[self.rotation][0]*mts
-            if direction == "strafe_left":
-                self.x += move_dir[self.rotation][1]
-                self.y += move_dir[self.rotation][0]
-                map.offsetX -= move_dir[self.rotation][1]*mts
-                map.offsetY -= move_dir[self.rotation][0]*mts
         return blockmsg
+
+    def strafe(self, direction):
+        if direction == "right":
+            self.rotate(1)
+            self.move("forward")
+            self.rotate(-1)
+        if direction == "left":
+            self.rotate(-1)
+            self.move("forward")
+            self.rotate(1)
+
 
     def rotate(self, turn):
         cardinal = (0, -90, 180, 90)  # (0 = N), (90 = W), (180 = S), (-90 = E)
@@ -761,14 +762,14 @@ def main():
                         print("Moved to", player.x, player.y)
                     if event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
                         print("Strafe Left")
-                        player.move("strafe_left")
+                        player.strafe("left")
                         print("Moved to", player.x, player.y)
                     elif event.key == pygame.K_a:
                         print("Turn Right")
                         player.rotate(-1)
                     if event.key == pygame.K_d and pygame.key.get_mods() & pygame.KMOD_LSHIFT:
                         print("Strafe Right")
-                        player.move("strafe_right")
+                        player.strafe("right")
                         print("Moved to", player.x, player.y)
                     elif event.key == pygame.K_d:
                         print("Turn Left")
