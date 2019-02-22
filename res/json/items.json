@@ -1,6 +1,7 @@
 {
   "sword": {
     "name":        "Sword",
+    "examine":     "A trusty short blade, ready for action at a moment's notice.",
     "slot":        "weapon",
     "isEquipable": true,
     "weight":      10,
@@ -8,6 +9,7 @@
   },
   "shield": {
     "name":        "Shield",
+    "examine":     "There are few things better in life than a solid slab of oak and leather between you and a deadly edge.",
     "slot":        "armor",
     "isEquipable": true,
     "weight":      25,
@@ -15,6 +17,7 @@
   },
   "gold": {
     "name":        "Gold Coin",
+    "examine":     "Stamped with a the King's seal, and worth more than your life to the common bandit.",
     "slot":        "currency",
     "isEquipable": false,
     "weight":      0.1,
@@ -22,6 +25,7 @@
   },
   "fist": {
     "name":        "Fist",
+    "examine":     "You have two of these, one slightly more deadly than the other, and you're not afraid to remind anyone of that fact.",
     "slot":        "weapon",
     "isEquipable": true,
     "weight":      0,
@@ -29,6 +33,7 @@
   },
   "whetstone": {
     "name":        "Whetstone",
+    "examine":     "When life seems dull, this course stone will put an edge back into your life.",
     "slot":        "enhancement",
     "isEquipable": false,
     "weight":      2,

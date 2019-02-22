@@ -204,7 +204,7 @@ class Player:
         self.xp = 0
         self.lvl = 1
         self.hp = self.max_hp
-        self.default_weapon = Item(None, "Fist", "weapon", True, 0, [0, 2])
+        self.default_weapon = Item(None, "Fist", "", "weapon", True, 0, [0, 2])
         self.weapon = self.default_weapon
         self.armor = []
         self.inventory = []
@@ -233,7 +233,7 @@ class Player:
             border_chk = -1
         if border_chk < 0 or next_x < 0 or next_y < 0:
             print("Out of Area")
-            blockmsg = "You dare not tread on the <!green:>Fathomless <!green:>Void."
+            blockmsg = "You dare not tread into the <!green:>Fathomless <!green:>Void."
         elif wall_check > 0:
             print("Blocked")
             blockmsg = "There's a %s in the way." % (next_square["name"])
@@ -274,11 +274,13 @@ class Player:
                 return
 
     def examine(self):
-        next_sqr = {0:   '[self.x - 1][self.y]',
-                    180: '[self.x + 1][self.y]',
-                    -90: '[self.x][self.y + 1]',
-                    90:  '[self.x][self.y - 1]'}
-        newmsg = eval("map.grid" + next_sqr[self.rotation])["name"]
+        move_dir = {0:   [-1, 0],
+                    180: [1, 0],
+                    -90: [0, 1],
+                    90:  [0, -1]}
+        next_x = self.x + move_dir[self.rotation][0]
+        next_y = self.y + move_dir[self.rotation][1]
+        newmsg = map.grid[next_x][next_y]["name"]
         return newmsg
 
     def additem(self, selection, qty=1):
@@ -354,11 +356,12 @@ class Player:
 
 
 class Monster:
-    def __init__(self, ID, name, hp, isHostile, weapon, damage, x, y):
+    def __init__(self, ID, name, hp, examine, weapon, damage, isHostile, x, y):
         self.ID = ID
         self.icon = mobico
         self.rotation = 0
         self.name = name
+        self.examine = examine
         self.hp = hp
         self.isHostile = isHostile
         self.weapon = weapon
@@ -375,9 +378,10 @@ class Monster:
 
 
 class Item:
-    def __init__(self, ID, name, slot, isEquipable, weight, damage):
+    def __init__(self, ID, name, examine, slot, isEquipable, weight, damage):
         self.ID = ID
         self.name = name
+        self.examine = examine
         self.slot = slot
         self.isEquipable = isEquipable
         self.weight = weight
@@ -395,10 +399,11 @@ def createmonster(monster, qty=1):
         if monster in monsters:
             entities.mobs.append(Monster(token,
                                          monsters[monster]['name'],
+                                         monsters[monster]['examine'],
                                          monsters[monster]['hp'],
-                                         monsters[monster]['isHostile'],
                                          monsters[monster]['weapon'],
                                          monsters[monster]['damage'],
+                                         False,
                                          spawn_xy[0],
                                          spawn_xy[1]))
             print("Created %s" % monster)
@@ -416,6 +421,7 @@ def createitem(itemname):
     if itemname in items:
         entities.items.append(Item(token,
                                    items[itemname]['name'],
+                                   items[itemname]['examine'],
                                    items[itemname]['slot'],
                                    items[itemname]['isEquipable'],
                                    items[itemname]['weight'],
@@ -431,7 +437,7 @@ def createitem(itemname):
 #     with open(tilesfile, 'r') as data:
 #         tiles = json.load(data)
 #     location = (x, y)
-#     map.tiles.appent(Tile(location,
+#     map.tiles.append(Tile(location,
 #                           items[itemname]['name'],
 #                           items[itemname]['slot'],
 #                           items[itemname]['isEquipable'],
@@ -781,6 +787,7 @@ def main():
                             textbox = player.examine()
                         except IndexError:
                             print("Nope.")
+                            textbox = "You gaze into the <!green:>Fathomless <!green:>Void... and the Void gazes back!"
                     if event.key == pygame.K_ESCAPE:
                         print("Shutting down...")
                         gs.running = False
