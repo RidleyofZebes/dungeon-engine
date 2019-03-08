@@ -192,6 +192,7 @@ class Brush:
 class Entity:
     def move(self, direction):
         mts = map.tile_size + map.tile_margin
+        blocked = False
         move_dir = {0:   [-1, 0],
                     180: [1, 0],
                     -90: [0, 1],
@@ -201,15 +202,22 @@ class Entity:
             next_y = self.y + move_dir[self.rotation][1]
             next_square = map.grid[next_x][next_y]
             wall_check = next_square["isWall"]
+            for enemy in entities.mobs:
+                if (enemy.x, enemy.y) == (next_x, next_y):
+                    blocked = True
+                    block_type = enemy.name
+            if wall_check > 0:
+                blocked = True
+                block_type = next_square["name"]
             border_chk = 1
         except IndexError:
             border_chk = -1
         if border_chk < 0 or next_x < 0 or next_y < 0:  # FIXME: Player can back out of area.
             print("Out of Area")
             blockmsg = "You dare not tread into the <!green:>Fathomless <!green:>Void."
-        elif wall_check > 0:
+        elif blocked == True:
             print("Blocked")
-            blockmsg = "There's a %s in the way." % (next_square["name"])
+            blockmsg = "There's %s in the way." % p.a(block_type)
         else:
             blockmsg = ""
             if direction == "forward":
@@ -290,7 +298,8 @@ class Player(Entity):
             newmsg = map.grid[next_x][next_y]["name"]
         else:
             mob = next(mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y))
-            newmsg = mob.examine
+            self.attack(mob.ID)
+            newmsg = ""
         return newmsg
 
     def additem(self, selection, qty=1):
@@ -366,7 +375,7 @@ class Player(Entity):
 
 
 class Monster(Entity):
-    def __init__(self, ID, name, examine, hp, weapon, damage, isHostile, x, y):
+    def __init__(self, ID, name, examine, hp, weapon, damage, viewrange, isHostile, x, y):
         self.ID = ID
         self.icon = mobico
         self.rotation = 0
@@ -378,7 +387,7 @@ class Monster(Entity):
         self.damage = damage
         self.x = x
         self.y = y
-        self.viewrange = 15
+        self.viewrange = viewrange
 
     def attack(self, target):
         print("The %s attacks %s with its %s" % (self.name, target.name, self.weapon))
@@ -414,6 +423,7 @@ def createmonster(monster, qty=1):
                                          monsters[monster]['hp'],
                                          monsters[monster]['weapon'],
                                          monsters[monster]['damage'],
+                                         monsters[monster]['viewrange'],
                                          False,
                                          spawn_xy[0],
                                          spawn_xy[1]))
@@ -763,6 +773,9 @@ def main():
                         if row == player.x and column == player.y:
                             textbox = "You see a tall, good looking... Wait a minute, that's <!blue:>you."
                             print(tile_desc)
+                        elif next((mob for mob in entities.mobs if (row, column) == (mob.x, mob.y)), 0) and map.grid[row][column]["isVisible"] == 1:
+                            mob = next((mob for mob in entities.mobs if (row, column) == (mob.x, mob.y)), 0)
+                            textbox = mob.examine
                         else:
                             tile_desc = map.grid[row][column]["name"]
                             textbox = tile_desc
