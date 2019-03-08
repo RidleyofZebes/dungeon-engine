@@ -7,7 +7,6 @@
 
 # Imports...
 import os
-import sys
 import pickle  # <-- The thing that lets the save/load function work. Favorite module name.
 import re
 import pygame
@@ -15,15 +14,17 @@ import math
 import random
 import json
 import inflect
-import pprint
+from res.misc import astar  # <-- Tried to use it, but it broke easily.
 
+# import pprint
+# import sys
 # from res import pygame_textinput  # <-- For entering player name
 # from natural.number import ordinal  # <-- Makes the numbers look pretty - 1st, 2nd, 3rd, 4th...
 
 p = inflect.engine()
 
 pygame.init()
-title = "dungeon engine v0.2.1-dev"
+title = "dungeon engine v0.2.2-dev"
 
 window_res = (1280, 720)
 FPS = 30
@@ -49,9 +50,9 @@ blue = (0, 0, 255)
 purple = (78, 48, 132)
 
 # Font(s)
-font = pygame.font.Font('res/fonts/alkhemikal.ttf', 28)
-stats_font = pygame.font.Font('res/fonts/poco.ttf', 20)
-tiny_font = pygame.font.Font('res/fonts/poco.ttf', 10)
+font = pygame.font.Font('res/fonts/Alkhemikal.ttf', 28)
+stats_font = pygame.font.Font('res/fonts/Poco.ttf', 20)
+tiny_font = pygame.font.Font('res/fonts/Poco.ttf', 10)
 
 # Image(s)
 heroico = pygame.image.load('res/images/maphero.png')
@@ -188,7 +189,66 @@ class Brush:
         print("Brush changed to " + self.name)
 
 
-class Player:
+class Entity:
+    def move(self, direction):
+        mts = map.tile_size + map.tile_margin
+        move_dir = {0:   [-1, 0],
+                    180: [1, 0],
+                    -90: [0, 1],
+                    90:  [0, -1]}
+        try:
+            next_x = self.x + move_dir[self.rotation][0]
+            next_y = self.y + move_dir[self.rotation][1]
+            next_square = map.grid[next_x][next_y]
+            wall_check = next_square["isWall"]
+            border_chk = 1
+        except IndexError:
+            border_chk = -1
+        if border_chk < 0 or next_x < 0 or next_y < 0:  # FIXME: Player can back out of area.
+            print("Out of Area")
+            blockmsg = "You dare not tread into the <!green:>Fathomless <!green:>Void."
+        elif wall_check > 0:
+            print("Blocked")
+            blockmsg = "There's a %s in the way." % (next_square["name"])
+        else:
+            blockmsg = ""
+            if direction == "forward":
+                self.x += move_dir[self.rotation][0]
+                self.y += move_dir[self.rotation][1]
+                if isinstance(self, Player):
+                    map.offsetX -= move_dir[self.rotation][0]*mts
+                    map.offsetY -= move_dir[self.rotation][1]*mts
+            if direction == "backward":
+                self.x -= move_dir[self.rotation][0]
+                self.y -= move_dir[self.rotation][1]
+                if isinstance(self, Player):
+                    map.offsetX += move_dir[self.rotation][0]*mts
+                    map.offsetY += move_dir[self.rotation][1]*mts
+        return blockmsg
+
+    def strafe(self, direction):
+        if direction == "right":
+            self.rotate(1)
+            self.move("forward")
+            self.rotate(-1)
+        if direction == "left":
+            self.rotate(-1)
+            self.move("forward")
+            self.rotate(1)
+
+    def rotate(self, turn):
+        cardinal = (0, -90, 180, 90)  # (0 = N), (90 = W), (180 = S), (-90 = E)
+        for x in range(len(cardinal)):
+            if self.rotation == cardinal[x]:
+                x += turn
+                if x >= len(cardinal):
+                    x -= len(cardinal)
+                self.rotation = cardinal[x]
+                print("Rotated to " + str(cardinal[x]) + " degrees")
+                return
+
+
+class Player(Entity):
     def __init__(self):
         """ [Game Data] """
         self.x = 0
@@ -217,61 +277,6 @@ class Player:
         # self.xp = 0
         # self.lvl = 1
         # self.gold = 0
-
-    def move(self, direction):
-        mts = map.tile_size + map.tile_margin
-        move_dir = {0:   [-1, 0],
-                    180: [1, 0],
-                    -90: [0, 1],
-                    90:  [0, -1]}
-        try:
-            next_x = self.x + move_dir[self.rotation][0]
-            next_y = self.y + move_dir[self.rotation][1]
-            next_square = map.grid[next_x][next_y]
-            wall_check = next_square["isWall"]
-            border_chk = 1
-        except IndexError:
-            border_chk = -1
-        if border_chk < 0 or next_x < 0 or next_y < 0:
-            print("Out of Area")
-            blockmsg = "You dare not tread into the <!green:>Fathomless <!green:>Void."
-        elif wall_check > 0:
-            print("Blocked")
-            blockmsg = "There's a %s in the way." % (next_square["name"])
-        else:
-            blockmsg = ""
-            if direction == "forward":
-                self.x += move_dir[self.rotation][0]
-                self.y += move_dir[self.rotation][1]
-                map.offsetX -= move_dir[self.rotation][0]*mts
-                map.offsetY -= move_dir[self.rotation][1]*mts
-            if direction == "backward":
-                self.x -= move_dir[self.rotation][0]
-                self.y -= move_dir[self.rotation][1]
-                map.offsetX += move_dir[self.rotation][0]*mts
-                map.offsetY += move_dir[self.rotation][1]*mts
-        return blockmsg
-
-    def strafe(self, direction):
-        if direction == "right":
-            self.rotate(1)
-            self.move("forward")
-            self.rotate(-1)
-        if direction == "left":
-            self.rotate(-1)
-            self.move("forward")
-            self.rotate(1)
-
-    def rotate(self, turn):
-        cardinal = (0, -90, 180, 90)  # (0 = N), (90 = W), (180 = S), (-90 = E)
-        for x in range(len(cardinal)):
-            if self.rotation == cardinal[x]:
-                x += turn
-                if x >= len(cardinal):
-                    x -= len(cardinal)
-                self.rotation = cardinal[x]
-                print("Rotated to " + str(cardinal[x]) + " degrees")
-                return
 
     def examine(self):
         move_dir = {0:   [-1, 0],
@@ -360,7 +365,7 @@ class Player:
             print("The %s is dead." % target.name)
 
 
-class Monster:
+class Monster(Entity):
     def __init__(self, ID, name, examine, hp, weapon, damage, isHostile, x, y):
         self.ID = ID
         self.icon = mobico
@@ -373,6 +378,7 @@ class Monster:
         self.damage = damage
         self.x = x
         self.y = y
+        self.viewrange = 15
 
     def attack(self, target):
         print("The %s attacks %s with its %s" % (self.name, target.name, self.weapon))
@@ -509,9 +515,9 @@ def button(button_pos, button_text, *button_width):  # Gets button X,Y and butto
         return pygame.Rect(button_size)
 
 
-def titlescreen():  # FIXME: takes way too long to fade in/out.
+def titlescreen():
     while gs.titlecard:
-        pygame.time.wait(2000)
+        pygame.time.wait(1000)
         fadein = True
         i = 0
         while fadein:
@@ -519,17 +525,18 @@ def titlescreen():  # FIXME: takes way too long to fade in/out.
             titlecard.set_alpha(i)
             gw.blit(titlecard, (0, 0))
             pygame.display.update()
-            i += 1
+            i += 3
             if i >= 255:
-                pygame.time.wait(2000)
+                pygame.time.wait(2500)
                 fadein = False
         while not fadein:
             gw.fill(black)
             titlecard.set_alpha(i)
             gw.blit(titlecard, (0, 0))
             pygame.display.update()
-            i -= 1
+            i -= 3
             if i <= 1:
+                pygame.time.wait(1000)
                 fadein = True
                 gs.titlecard = False
 
@@ -812,6 +819,59 @@ def main():
                     if event.key == pygame.K_F1:
                         print("Create Random Monster")
                         createmonster('random')
+                    if event.key == pygame.K_F2:
+                        for enemy in entities.mobs:
+                            print("Checking %s line of sight..." % enemy.name)
+                            targeting = False
+                            for i in range(0, RAYS + 1, STEP):
+                                ax = sintable[i]  # Get value sin(x / (180 / pi))
+                                ay = costable[i]  # cos(x / (180 / pi))
+                                x = enemy.x  # Player's x
+                                y = enemy.y  # Player's y
+                                for z in range(enemy.viewrange):  # Cast the ray
+                                    x += ax
+                                    y += ay
+                                    if x < 0 or y < 0 or x > map.width or y > map.height:  # If ray is out of range
+                                        break
+                                    try:
+                                        # Discover the tile and make it visible if it exists
+                                        map.grid[int(round(x))][int(round(y))].update(
+                                            {"isDiscovered": 1, "isVisible": 1})
+                                    except IndexError:
+                                        break
+                                    if map.grid[int(round(x))][int(round(y))]["isWall"] == 1:  # Stop ray if it hit
+                                        break
+                                    if (int(round(x)), int(round(y))) == (player.x, player.y):
+                                        print("%s can see player." % enemy.name)
+                                        targeting = True
+                            if targeting:
+                                print("%s can see player." % enemy.name)
+
+                                print("Moving %s" % enemy.name)
+                                current_location = (enemy.x, enemy.y)
+                                print("%s location is %s" % (enemy.name, current_location))
+
+                                target = (player.x, player.y)
+                                print("%s location is %s" % (player.name, target))
+
+                                path = astar.getpath(map.grid, current_location, target)
+                                print(path)
+
+                                move_dir = {0: [-1, 0],
+                                            180: [1, 0],
+                                            -90: [0, 1],
+                                            90: [0, -1]}
+                                next_step = (enemy.x + move_dir[enemy.rotation][0], enemy.y + move_dir[enemy.rotation][1])
+                                try:
+                                    if next_step != path[1]:
+                                        print(next_step, path[1])
+                                        enemy.rotate(1)
+                                    elif next_step == target:
+                                        enemy.attack(player)
+                                    else:
+                                        enemy.move("forward")
+                                except IndexError:
+                                    break
 
                     if event.key == pygame.K_m and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                         print("Switching Maps...")
