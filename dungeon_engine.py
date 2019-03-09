@@ -12,6 +12,7 @@ import re
 import pygame
 import math
 import random
+import itertools
 import json
 import inflect
 from res.misc import astar  # <-- Tried to use it, but it broke easily.
@@ -71,7 +72,7 @@ class GameState:
     def __init__(self):
         self.running = True
         self.mapdisplay = 0
-        self.INTRO_DISABLED = True
+        self.INTRO_DISABLED = False
         self.DISPLAY_VERSION = True
         self.titlecard = True
         self.mainmenu = False
@@ -528,27 +529,48 @@ def button(button_pos, button_text, *button_width):  # Gets button X,Y and butto
 def titlescreen():
     while gs.titlecard:
         pygame.time.wait(1000)
-        fadein = True
-        i = 0
-        while fadein:
+
+        tx = 1280  # 575, 850
+        ratio = int(1280 / tx)
+        ty = 720 * ratio
+
+        for i in range(0, 255, 5):
             gw.fill(black)
-            titlecard.set_alpha(i)
-            gw.blit(titlecard, (0, 0))
+
+            titlecardzoom = pygame.transform.smoothscale(titlecard, (tx, ty))
+            titlecardzoomrect = titlecardzoom.get_rect()
+            titlecardzoomrect.center = (window_res[0] / 2, window_res[1] / 2)
+            titlecardzoom.set_alpha(i)
+            tx += 1
+            ty += 1*ratio
+            gw.blit(titlecardzoom, titlecardzoomrect)
             pygame.display.update()
-            i += 3
-            if i >= 255:
-                pygame.time.wait(2500)
-                fadein = False
-        while not fadein:
+
+        for i in range(0, 50):
             gw.fill(black)
-            titlecard.set_alpha(i)
-            gw.blit(titlecard, (0, 0))
+
+            titlecardzoom = pygame.transform.smoothscale(titlecard, (tx, ty))
+            titlecardzoomrect = titlecardzoom.get_rect()
+            titlecardzoomrect.center = (window_res[0] / 2, window_res[1] / 2)
+            tx += 1
+            ty += 1*ratio
+            gw.blit(titlecardzoom, titlecardzoomrect)
             pygame.display.update()
-            i -= 3
-            if i <= 1:
-                pygame.time.wait(1000)
-                fadein = True
-                gs.titlecard = False
+
+        for i in reversed(range(0, 255, 5)):
+            gw.fill(black)
+
+            titlecardzoom = pygame.transform.smoothscale(titlecard, (tx, ty))
+            titlecardzoomrect = titlecardzoom.get_rect()
+            titlecardzoomrect.center = (window_res[0] / 2, window_res[1] / 2)
+            titlecardzoom.set_alpha(i)
+            tx += 1
+            ty += 1*ratio
+            gw.blit(titlecardzoom, titlecardzoomrect)
+            pygame.display.update()
+
+        pygame.time.wait(500)
+        gs.titlecard = False
 
 
 def mainmenu():
