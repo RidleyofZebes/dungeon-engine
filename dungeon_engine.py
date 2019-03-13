@@ -31,7 +31,7 @@ window_res = (1280, 720)
 FPS = 30
 
 gw = pygame.display.set_mode(window_res)
-#gw = pygame.display.set_mode(window_res, pygame.FULLSCREEN)
+# gw = pygame.display.set_mode(window_res, pygame.FULLSCREEN)
 pygame.display.set_caption(title)
 
 pygame.key.set_repeat(10, 50)
@@ -72,12 +72,18 @@ class GameState:
     def __init__(self):
         self.running = True
         self.mapdisplay = 0
-        self.INTRO_DISABLED = False
+        self.infoscreen = 0
+        self.INTRO_DISABLED = True
         self.DISPLAY_VERSION = True
-        self.titlecard = True
+        self.intro_vid = True
         self.mainmenu = False
         self.newgame = False
         self.mapedit = False
+
+        self.viewscreen_size = (999, 527)
+        self.minimap_size = (256, 256)
+        self.textbox_size = (999, 168)
+        self.infoscreen_size = (257, 439)
 
 
 class Entities:
@@ -461,13 +467,12 @@ def createitem(itemname):
 #     location = (x, y)
 #     map.tiles.append(Tile(location,
 #                           items[itemname]['name'],
-#                           items[itemname]['slot'],
-#                           items[itemname]['isEquipable'],
-#                           items[itemname]['weight'],
-#                           items[itemname]['damage']))
+#                           items[itemname]['examine'],
+#                           items[itemname]['color'],
+#                           items[itemname]['isWall']))
 
 def message(text, *texloc, color=white):  # FIXME Word highlighting syntax is weird. Needs re-written.
-    textbox = pygame.Surface((999, 168))
+    textbox = pygame.Surface((gs.textbox_size[0], gs.textbox_size[1]))
     defaultcolor = color
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
     space = font.size(' ')[0]  # The width of a space.
@@ -527,14 +532,14 @@ def button(button_pos, button_text, *button_width):  # Gets button X,Y and butto
 
 
 def titlescreen():
-    while gs.titlecard:
+    while gs.intro_vid:
         pygame.time.wait(1000)
 
         tx = 1280  # 575, 850
         ratio = int(1280 / tx)
         ty = 720 * ratio
 
-        for i in range(0, 255, 5):
+        for i in range(0, 255, 3):
             gw.fill(black)
 
             titlecardzoom = pygame.transform.smoothscale(titlecard, (tx, ty))
@@ -557,7 +562,7 @@ def titlescreen():
             gw.blit(titlecardzoom, titlecardzoomrect)
             pygame.display.update()
 
-        for i in reversed(range(0, 255, 5)):
+        for i in reversed(range(0, 255, 3)):
             gw.fill(black)
 
             titlecardzoom = pygame.transform.smoothscale(titlecard, (tx, ty))
@@ -570,7 +575,7 @@ def titlescreen():
             pygame.display.update()
 
         pygame.time.wait(500)
-        gs.titlecard = False
+        gs.intro_vid = False
 
 
 def mainmenu():
@@ -938,8 +943,8 @@ def main():
 
             viewscreen = pygame.Surface((999, 527))
             minimap = pygame.Surface((256, 256))
-
-            statmenu = pygame.Surface((257, 439))  # TODO Display relevant information
+            # 'textbox' moved to messagebox() function
+            infoscreen = pygame.Surface((257, 439))  # TODO Display relevant information
 
             """ Draw the map """
 
@@ -1007,28 +1012,33 @@ def main():
                                                (enemy.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
 
             """ Draw the Info Box """
-            heroname = font.render(player.name, 0, white)
-            heroname_rect = heroname.get_rect()
-            heroname_rect.center = (257/2, 20)
-            statmenu.blit(heroname, heroname_rect)
+            # stats, inventory, equipment
+            if gs.infoscreen == 0:
+                """ Hero Name """
+                heroname = font.render(player.name, 0, white)
+                heroname_rect = heroname.get_rect()
+                heroname_rect.center = (257/2, 20)
+                infoscreen.blit(heroname, heroname_rect)
+                """ HP Bar """
+                pygame.draw.rect(infoscreen, dkgray, (10, heroname_rect[3]+10, gs.infoscreen_size[0]-20, 5))
+                hpcolor = green
+                barlength = player.hp*(gs.infoscreen_size[0]-20)/player.max_hp
+                pygame.draw.rect(infoscreen, hpcolor, (10, heroname_rect[3]+10, barlength, 5))
 
-            # TODO: Add HP bar below name
+            if gs.infoscreen == 1:
+                pass
+            if gs.infoscreen == 2:
+                pass
+
             # TODO: Add player stats (STR, DEX, CON, etc.) below HP bar
-
-            """ Tile Descriptions? """
-            # tiledescrect = font.render(tile_desc, False, black)
-            # descrect = tiledescrect.get_rect()
-            # descrect.center = (658, 300)
-            # gw.blit(tiledescrect, descrect)
-
-            message(textbox)
 
             # Create the 4 main surfaces: viewscreen, minimap, textbox, and menu
 
             gw.blit(viewscreen, (10, 10))
             gw.blit(minimap, (1014, 10))
-
-            gw.blit(statmenu, (1014, 271))
+            # 'textbox' moved to messagebox() function
+            message(textbox)
+            gw.blit(infoscreen, (1014, 271))
 
             # Display game version
             if gs.DISPLAY_VERSION:
