@@ -4,6 +4,12 @@ with PyGame.
 
 
 ### changelog:
+##### v0.2.2-dev | `03-24-2019`
+  * Added monsters with limited A* pathfinding
+  * Added descriptions for tiles, mobs, and items
+  * Added an information panel for character traits and inventory. 
+  * Code cleanup, bugfixes, and quality of life improvements
+  
 ##### v0.2.1-dev | `01-24-2019`
   * Renamed project to `Dungeon Engine`
   * Added (disableable) intro, main menu, game states

@@ -45,6 +45,7 @@ ltgray = (169, 169, 169)
 white = (255, 255, 255)
 red = (255, 0, 0)
 orange = (255, 128, 0)
+yellow = (255, 255, 0)
 green = (0, 255, 0)
 dkgreen = (1, 50, 32)
 blue = (0, 0, 255)
@@ -222,7 +223,7 @@ class Entity:
         if border_chk < 0 or next_x < 0 or next_y < 0:  # FIXME: Player can back out of area.
             print("Out of Area")
             blockmsg = "You dare not tread into the <!green:>Fathomless <!green:>Void."
-        elif blocked == True:
+        elif blocked:
             print("Blocked")
             blockmsg = "There's %s in the way." % p.a(block_type)
         else:
@@ -903,7 +904,8 @@ def main():
                                             180: [1, 0],
                                             -90: [0, 1],
                                             90: [0, -1]}
-                                next_step = (enemy.x + move_dir[enemy.rotation][0], enemy.y + move_dir[enemy.rotation][1])
+                                next_step = (enemy.x + move_dir[enemy.rotation][0],
+                                             enemy.y + move_dir[enemy.rotation][1])
                                 try:
                                     if next_step != path[1]:
                                         print(next_step, path[1])
@@ -1014,7 +1016,7 @@ def main():
                                                (enemy.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
 
             """ Draw the Info Box """
-            # stats, inventory, equipment
+            # stats, inventory, game menu
             if gs.infoscreen == 0:  # Player Stats
                 """ Hero Name """
                 heroname = font.render(player.name, 0, white)
@@ -1023,7 +1025,15 @@ def main():
                 infoscreen.blit(heroname, heroname_rect)
                 """ HP Bar """
                 pygame.draw.rect(infoscreen, dkgray, (10, heroname_rect[3]+7, gs.infoscreen_size[0]-20, 7))
-                hpcolor = green
+                hpcolor = dkgreen
+                if player.hp < player.max_hp:
+                    hpcolor = green
+                if player.hp < player.max_hp/1.5:
+                    hpcolor = yellow
+                if player.hp < player.max_hp/3:
+                    hpcolor = orange
+                if player.hp < player.max_hp/8:
+                    hpcolor = red
                 barlength = player.hp*(gs.infoscreen_size[0]-20)/player.max_hp
                 pygame.draw.rect(infoscreen, hpcolor, (10, heroname_rect[3]+7, barlength, 7))
                 """ Player Stats """
@@ -1045,16 +1055,12 @@ def main():
                     infoscreen.blit(ability, ability_rect)
                     infoscreen.blit(score, score_rect)
 
-
             if gs.infoscreen == 1:  # Inventory
                 pass
             if gs.infoscreen == 2:  # Game Menu
                 pass
 
-            # TODO: Add player stats (STR, DEX, CON, etc.) below HP bar
-
-            # Create the 4 main surfaces: viewscreen, minimap, textbox, and menu
-
+            """ Create the 4 main surfaces: viewscreen, minimap, textbox, and menu """
             gw.blit(viewscreen, (10, 10))
             gw.blit(minimap, (1014, 10))
             message(textbox)  # 'textbox' moved to message() function
