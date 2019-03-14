@@ -617,10 +617,12 @@ def mainmenu():
 
             pygame.display.update()
 
+
 def newgame():
     print("This is where I'd put my character creation screen... if I had one.")
     pass
     # TODO Character creation screen with statgentest.py
+
 
 def save():
     print("Saving...")
@@ -667,7 +669,7 @@ def main():
         map.reset()
         newgame()
 
-    textbox = "Welcome, <!red:>%s! Your destiny awaits." % (player.name)
+    textbox = "Welcome, <!red:>%s! Your destiny awaits." % player.name
 
     RAYS = 360  # Should be 360!
 
@@ -1013,21 +1015,40 @@ def main():
 
             """ Draw the Info Box """
             # stats, inventory, equipment
-            if gs.infoscreen == 0:
+            if gs.infoscreen == 0:  # Player Stats
                 """ Hero Name """
                 heroname = font.render(player.name, 0, white)
                 heroname_rect = heroname.get_rect()
-                heroname_rect.center = (257/2, 20)
+                heroname_rect.center = (gs.infoscreen_size[0]/2, 20)
                 infoscreen.blit(heroname, heroname_rect)
                 """ HP Bar """
-                pygame.draw.rect(infoscreen, dkgray, (10, heroname_rect[3]+10, gs.infoscreen_size[0]-20, 5))
+                pygame.draw.rect(infoscreen, dkgray, (10, heroname_rect[3]+7, gs.infoscreen_size[0]-20, 7))
                 hpcolor = green
                 barlength = player.hp*(gs.infoscreen_size[0]-20)/player.max_hp
-                pygame.draw.rect(infoscreen, hpcolor, (10, heroname_rect[3]+10, barlength, 5))
+                pygame.draw.rect(infoscreen, hpcolor, (10, heroname_rect[3]+7, barlength, 7))
+                """ Player Stats """
+                playerinfo = "%s %s" % (player.race, player.job)
+                race_class = stats_font.render(playerinfo, 0, white)
+                race_class_rect = race_class.get_rect()
+                race_class_rect.center = (gs.infoscreen_size[0]/2, heroname_rect[3]+22)
+                infoscreen.blit(race_class, race_class_rect)
+                """ Player Skills """
+                skillpad = [23, 90]
+                for skill in player.stat:
+                    ability = stats_font.render(skill, 0, white)
+                    score = font.render(str(player.stat[skill]), 0, white)
+                    ability_rect = ability.get_rect()
+                    score_rect = score.get_rect()
+                    ability_rect.midtop = skillpad
+                    score_rect.midbottom = (skillpad[0], skillpad[1]+10)
+                    skillpad[0] += 42
+                    infoscreen.blit(ability, ability_rect)
+                    infoscreen.blit(score, score_rect)
 
-            if gs.infoscreen == 1:
+
+            if gs.infoscreen == 1:  # Inventory
                 pass
-            if gs.infoscreen == 2:
+            if gs.infoscreen == 2:  # Game Menu
                 pass
 
             # TODO: Add player stats (STR, DEX, CON, etc.) below HP bar
@@ -1036,8 +1057,7 @@ def main():
 
             gw.blit(viewscreen, (10, 10))
             gw.blit(minimap, (1014, 10))
-            # 'textbox' moved to messagebox() function
-            message(textbox)
+            message(textbox)  # 'textbox' moved to message() function
             gw.blit(infoscreen, (1014, 271))
 
             # Display game version
