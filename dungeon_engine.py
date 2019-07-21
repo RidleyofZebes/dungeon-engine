@@ -206,23 +206,40 @@ class Entity:
                     -90: [0, 1],
                     90:  [0, -1]}
         try:
-            next_x = self.x + move_dir[self.rotation][0]
-            next_y = self.y + move_dir[self.rotation][1]
-            next_square = map.grid[next_x][next_y]
-            wall_check = next_square["isWall"]
-            for enemy in entities.mobs:
-                if (enemy.x, enemy.y) == (next_x, next_y):
+            if direction == "forward":
+                next_x = self.x + move_dir[self.rotation][0]
+                next_y = self.y + move_dir[self.rotation][1]
+                next_square = map.grid[next_x][next_y]
+                wall_check = next_square["isWall"]
+                for enemy in entities.mobs:
+                    if (enemy.x, enemy.y) == (next_x, next_y):
+                        blocked = True
+                        block_type = enemy.name
+                if wall_check > 0:
                     blocked = True
-                    block_type = enemy.name
-            if wall_check > 0:
-                blocked = True
-                block_type = next_square["name"]
-            border_chk = 1
+                    block_type = next_square["name"]
+                border_chk = 1
+            if direction == "backward":
+                prev_x = self.x - move_dir[self.rotation][0]
+                prev_y = self.y - move_dir[self.rotation][1]
+                prev_square = map.grid[prev_x][prev_y]
+                wall_check = prev_square["isWall"]
+                for enemy in entities.mobs:
+                    if (enemy.x, enemy.y) == (prev_x, prev_y):
+                        blocked = True
+                        block_type = enemy.name
+                if wall_check > 0:
+                    blocked = True
+                    block_type = prev_square["name"]
+                border_chk = 1
         except IndexError:
             border_chk = -1
-        if border_chk < 0 or next_x < 0 or next_y < 0:  # FIXME: Player can back out of area.
+        if direction == "forward" and (border_chk < 0 or next_x < 0 or next_y < 0):
             print("Out of Area")
             blockmsg = "You dare not tread into the <!green:>Fathomless <!green:>Void."
+        elif direction == "backward" and (border_chk < 0 or prev_x < 0 or prev_y < 0):
+            print("Out of Area")
+            blockmsg = "You dare not back into the <!green:>Fathomless <!green:>Void."
         elif blocked:
             print("Blocked")
             blockmsg = "There's %s in the way." % p.a(block_type)
