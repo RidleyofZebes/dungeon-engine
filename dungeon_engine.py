@@ -15,6 +15,7 @@ import random
 import itertools
 import json
 import inflect
+from res.misc import colortag  # <-- I WROTE THAT ONE!
 from res.misc import astar  # <-- Tried to use it, but it broke easily.
 
 # import pprint
@@ -25,7 +26,7 @@ from res.misc import astar  # <-- Tried to use it, but it broke easily.
 p = inflect.engine()
 
 pygame.init()
-title = "dungeon engine v0.2.2-dev"
+title = "dungeon engine v0.2.3-dev"
 
 window_res = (1280, 720)
 FPS = 30
@@ -489,7 +490,7 @@ def createitem(itemname):
 #                           items[itemname]['color'],
 #                           items[itemname]['isWall']))
 
-def message(text, *texloc, color=white):  # FIXME Word highlighting syntax is weird. Needs re-written.
+def message(text, *texloc, color=white):  # TODO: Implement new word highlighting syntax.
     textbox = pygame.Surface((gs.textbox_size[0], gs.textbox_size[1]))
     defaultcolor = color
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
