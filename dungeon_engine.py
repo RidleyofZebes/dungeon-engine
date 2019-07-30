@@ -237,10 +237,10 @@ class Entity:
             border_chk = -1
         if direction == "forward" and (border_chk < 0 or next_x < 0 or next_y < 0):
             print("Out of Area")
-            blockmsg = "You dare not tread into the <!green:>Fathomless <!green:>Void."
+            blockmsg = "You dare not tread into the <!green>Fathomless Void.</>"
         elif direction == "backward" and (border_chk < 0 or prev_x < 0 or prev_y < 0):
             print("Out of Area")
-            blockmsg = "You dare not back into the <!green:>Fathomless <!green:>Void."
+            blockmsg = "You dare not back into the <!green>Fathomless Void.</>"
         elif blocked:
             print("Blocked")
             blockmsg = "There's %s in the way." % p.a(block_type)
@@ -490,42 +490,31 @@ def createitem(itemname):
 #                           items[itemname]['color'],
 #                           items[itemname]['isWall']))
 
-def message(text, *texloc, color=white):  # TODO: Implement new word highlighting syntax.
+def message(words, *location):
+    words = colortag.decode(words)
+    max_width = 800
     textbox = pygame.Surface((gs.textbox_size[0], gs.textbox_size[1]))
-    defaultcolor = color
-    words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
-    space = font.size(' ')[0]  # The width of a space.
-    max_width, max_height = 999, 168
-    if not texloc:
+    if not location:
         pos = 10, 10
     else:
-        pos = texloc
-    x, y = pos
-    for line in words:
-        for word in line:
-            color = defaultcolor
-            # Searches for text wrapped in <!these characters:>, which is used here to change the color of the word.
-            if re.search('<!(.*):>', word):
-                colorcheck = re.search('<!(.*):>', word)  # Assigns the captured string to a variable.
-                strip = re.sub(r'\W', "", colorcheck.group())  # Removes everything from the string except the word.
-                # Removes the flag and keyword from the text for cleanup.
-                word = re.sub(colorcheck.group(), "", word)
-                # Re-renders and gets the new size of the word after the flag has been removed.
-                word_surface = font.render(word, False, color)
-                word_width, word_height = word_surface.get_size()
-                color = eval(strip)
-                if x + word_width >= max_width:
-                    x = pos[0]
-                    y += word_height
-            word_surface = font.render(word, 0, color)
-            word_width, word_height = word_surface.get_size()
-            if x + word_width >= max_width:
-                x = pos[0]  # Reset the x.
-                y += word_height  # Start on new row.
-            textbox.blit(word_surface, (x, y))
-            x += word_width + space
-        x = pos[0]  # Reset the x.
-        y += word_height  # Start on new row.
+        pos = location
+    x, y = pos[0], pos[1]
+    for word, color in words:
+        space = font.size(' ')[0]
+        each_word = font.render(word, False, eval(color))
+        word_width, word_height = each_word.get_size()
+        if word == "<br>":
+            y += word_height
+            x = pos[0]
+            each_word = font.render("", False, eval(color))
+            word_width, word_height = each_word.get_size()
+            space = 0
+        if x + word_width >= max_width:
+            x = pos[0]
+            y += word_height
+        textbox.blit(each_word, (x, y))
+        x += word_width + space
+    pygame.display.update()
     gw.blit(textbox, (10, 542))
 
 
@@ -686,7 +675,7 @@ def main():
         map.reset()
         newgame()
 
-    textbox = "Welcome, <!red:>%s! Your destiny awaits." % (player.name)
+    textbox = "Welcome, <!red>%s!</> Your destiny awaits." % (player.name)
 
     RAYS = 360  # Should be 360!
 
@@ -817,7 +806,7 @@ def main():
                         row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
                         print("Right Click ", pos, "Grid coordinates: ", row, column)
                         if row == player.x and column == player.y:
-                            textbox = "You see a tall, good looking... Wait a minute, that's <!blue:>you."
+                            textbox = "You see a tall, good looking... Wait a minute, that's <!blue>you.</>"
                             print(tile_desc)
                         elif next((mob for mob in entities.mobs if (row, column) == (mob.x, mob.y)), 0) and map.grid[row][column]["isVisible"] == 1:
                             mob = next((mob for mob in entities.mobs if (row, column) == (mob.x, mob.y)), 0)
@@ -858,7 +847,7 @@ def main():
                             textbox = player.examine()
                         except IndexError:
                             print("Nope.")
-                            textbox = "You gaze into the <!green:>Fathomless <!green:>Void... and the Void gazes back!"
+                            textbox = "You gaze into the <!green>Fathomless Void...</> and the Void gazes back!"
                     if event.key == pygame.K_ESCAPE:
                         print("Shutting down...")
                         gs.running = False
@@ -946,11 +935,11 @@ def main():
                     if not gs.mapedit:
                         gs.mapedit = True
                         print("Entering Map Editor Mode!")
-                        textbox = "Entering <!blue:>Map <!blue:>Editor Mode!"
+                        textbox = "Entering <!blue>Map blue</>Editor Mode!"
                     elif gs.mapedit:
                         gs.mapedit = False
                         print("Map Editor Disabled...")
-                        textbox = "Map Editor <!red:>Disabled..."
+                        textbox = "Map Editor <!red>Disabled...</>"
 
         """ Begin drawing the game screen """
 

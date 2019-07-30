@@ -47,11 +47,6 @@ def decode(string, default_color="white"):
         if not redundant:
             compiled.append([a[0], default_color])
 
-    ''' Testing, ignore these '''
-    # print(compiled)
-    # for word in compiled:
-    #     tc.cprint(word[0], word[1], end=" ")
-
     return compiled
 
 
