@@ -16,6 +16,7 @@ import itertools
 import json
 import inflect
 from res.misc import colortag  # <-- I WROTE THAT ONE!
+from res.misc import character_gen
 from res.misc import astar  # <-- Tried to use it, but it broke easily.
 
 # import pprint
@@ -294,6 +295,7 @@ class Player(Entity):
         self.name = "Thorgath of Udd"
         self.race = "Half-Orc"
         self.job = "Fighter"
+        self.sex = "male"
         self.stat = {"str": 12, "dex": 10, "con": 15, "wis": 8, "cha": 11, "lck": 10}
         self.max_hp = (self.stat['con'] * 8)
         self.xp = 0
@@ -514,29 +516,28 @@ def message(words, *location):
             y += word_height
         textbox.blit(each_word, (x, y))
         x += word_width + space
-    pygame.display.update()
     gw.blit(textbox, (10, 542))
+    pygame.display.update()
 
 
-# TODO: Rewrite button code.
-def button(button_pos, button_text, *button_width):  # Gets button X,Y and button label
-        button_padding = 25  # Set padding between button text and border
-        label = font.render(button_text, 0, white)  # Renders button label
-        button_sizex, button_sizey = label.get_size()  # Sends button label dimensions to A,B variables
-        if not button_width:
-            # Outputs the button with default padding to the screen
-            gw.blit(label, ((button_pos[0] + (button_padding / 2)), (button_pos[1] + (button_padding / 2))))
-            button_size = (button_pos[0], button_pos[1],
-                           (button_sizex + button_padding),
-                           (button_sizey + (button_padding * 0.8)))
-        else:
-            # Outputs the button with padding and centered text to the screen
-            gw.blit(label, (((button_pos[0] + ((button_width[0] + button_padding) / 2)) - (button_sizex / 2)),
-                            (button_pos[1] + (button_padding / 2))))
-            button_size = (button_pos[0], button_pos[1], (button_width[0] + button_padding),
-                           (button_sizey + (button_padding * 0.8)))
-        pygame.draw.rect(gw, white, button_size, 4)
-        return pygame.Rect(button_size)
+def button(button_position, button_text, *button_width, button_color=white): # Gets button X,Y and button label
+    button_padding = 25  # Set padding between button text and border
+    label = font.render(button_text, 0, button_color)  # Renders button label
+    button_size_x, button_size_y = label.get_size()  # Sends button label dimensions to A,B variables
+    if not button_width:  # Outputs the button with default padding to the screen
+        gw.blit(label, ((button_position[0] + (button_padding / 2)),
+                        (button_position[1] + (button_padding / 2))))
+        button_size = (button_position[0], button_position[1],
+                       (button_size_x + button_padding),
+                       (button_size_y + (button_padding * 0.8)))
+    else:  # Outputs the button with padding and centered text to the screen
+        gw.blit(label, (((button_position[0] + ((button_width[0] + button_padding) / 2)) -
+                         (button_size_x / 2)), (button_position[1] + (button_padding / 2))))
+        button_size = (button_position[0], button_position[1],
+                       (button_width[0] + button_padding),
+                       (button_size_y + (button_padding * 0.8)))
+    pygame.draw.rect(gw, button_color, button_size, 4)
+    return pygame.Rect(button_size)
 
 
 def titlescreen():
@@ -588,6 +589,10 @@ def titlescreen():
 
 def mainmenu():
     gs.mainmenu = True
+    if savegame_exist():
+        button_color = white
+    else:
+        button_color = dkgray
     while gs.mainmenu:
         for menu_event in pygame.event.get():
             if menu_event.type == pygame.QUIT:
@@ -603,8 +608,11 @@ def mainmenu():
             version_rect = version.get_rect()
             gw.blit(version, (5, (window_res[1]-version_rect.height)))
 
-            start = button(((window_res[0]/2-150), window_res[1]/2 - 100), "Venture Forth!", 300)
-            loadgame = button(((window_res[0]/2-150), window_res[1]/2 - 30), "Continue your Adventure", 300)
+
+
+            loadgame = button(((window_res[0] / 2 - 150), window_res[1] / 2 - 100), "Continue your Adventure", 300,
+                              button_color=button_color)
+            start = button(((window_res[0]/2-150), window_res[1]/2 - 30), "Venture Forth!", 300)
             editor = button(((window_res[0]/2-150), window_res[1]/2 + 40), "Map Editor", 300)
             settings = button(((window_res[0] / 2 - 150), window_res[1] / 2 + 110), "Settings", 300)
             credit = button(((window_res[0] / 2 - 75), window_res[1] / 2 + 300), "Credits", 150)
@@ -626,9 +634,7 @@ def mainmenu():
             pygame.display.update()
 
 def newgame():
-    print("This is where I'd put my character creation screen... if I had one.")
-    pass
-    # TODO Character creation screen with statgentest.py
+    player.name, player.stat, player.race, player.job, player.sex = character_gen.main(28)
 
 def save():
     print("Saving...")
@@ -640,6 +646,20 @@ def save():
     with open('save/dungeon3.sav', 'wb') as f:
         pickle.dump(data, f)
     print("Dungeon Saved")
+
+
+def savegame_exist():
+    savepath = 'save/'
+    savegames = [file for file in os.listdir(savepath) if os.path.isfile(os.path.join(savepath, file))]
+    if savegames:
+        print("found %d save file(s)" % len(savegames))
+        return True
+    else:
+        print("ERROR no saves")
+        return False
+
+
+# def loadgame():
 
 
 def load():
@@ -656,26 +676,29 @@ def load():
         print("No file to load, generating new dungeon...")
         map.reset()
 
+
 map = Map()
-player = Player()
 gs = GameState()
 brush = Brush()
 entities = Entities()
-
+player = Player()
 load()
 
 
 def main():
+
     if not gs.INTRO_DISABLED:
         titlescreen()
 
     mainmenu()
 
+    # if gs.load_game_menu:
+    #     loadgame()
     if gs.newgame:
         map.reset()
         newgame()
 
-    textbox = "Welcome, <!red>%s!</> Your destiny awaits." % (player.name)
+        textbox = "Welcome, <!red>%s!</> Your destiny awaits." % player.name
 
     RAYS = 360  # Should be 360!
 
@@ -686,7 +709,7 @@ def main():
     sintable = []
     costable = []
 
-    for x in range (0, 361):
+    for x in range(0, 361):
         sincalc = math.sin(x/(180/math.pi))
         sintable.append(sincalc)
         coscalc = math.cos(x/(180/math.pi))
@@ -935,7 +958,7 @@ def main():
                     if not gs.mapedit:
                         gs.mapedit = True
                         print("Entering Map Editor Mode!")
-                        textbox = "Entering <!blue>Map blue</>Editor Mode!"
+                        textbox = "Entering <!blue>Map Editor</> Mode!"
                     elif gs.mapedit:
                         gs.mapedit = False
                         print("Map Editor Disabled...")
@@ -952,7 +975,7 @@ def main():
             viewscreen = pygame.Surface((999, 527))
             minimap = pygame.Surface((256, 256))
             # 'textbox' moved to messagebox() function
-            infoscreen = pygame.Surface((257, 439))  # TODO Display relevant information
+            infoscreen = pygame.Surface((257, 439))
 
             """ Draw the map """
 
@@ -1041,7 +1064,7 @@ def main():
                 barlength = player.hp*(gs.infoscreen_size[0]-20)/player.max_hp
                 pygame.draw.rect(infoscreen, hpcolor, (10, heroname_rect[3]+7, barlength, 7))
                 """ Player Stats """
-                playerinfo = "%s %s" % (player.race, player.job)
+                playerinfo = "%s %s, lvl %d" % (player.race, player.job, player.lvl)
                 race_class = stats_font.render(playerinfo, 0, white)
                 race_class_rect = race_class.get_rect()
                 race_class_rect.center = (gs.infoscreen_size[0]/2, heroname_rect[3]+22)
@@ -1067,14 +1090,15 @@ def main():
             """ Create the 4 main surfaces: viewscreen, minimap, textbox, and menu """
             gw.blit(viewscreen, (10, 10))
             gw.blit(minimap, (1014, 10))
-            message(textbox)  # 'textbox' moved to message() function
             gw.blit(infoscreen, (1014, 271))
+            message(textbox)  # 'textbox' moved to message() function
 
             # Display game version
             if gs.DISPLAY_VERSION:
                 version = tiny_font.render(title, 0, red)
                 version_rect = version.get_rect()
                 gw.blit(version, (2, (window_res[1]-version_rect.height)))
+                pygame.display.update()
 
         """ Second display view """
         # TODO: Either trash this or fix it.
