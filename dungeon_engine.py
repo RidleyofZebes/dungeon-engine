@@ -17,6 +17,7 @@ import json
 import inflect
 from res.misc import colortag  # <-- I WROTE THAT ONE!
 from res.misc import character_gen
+from res.misc import dungenerator
 from res.misc import astar  # <-- Tried to use it, but it broke easily.
 
 # import pprint
@@ -27,7 +28,7 @@ from res.misc import astar  # <-- Tried to use it, but it broke easily.
 p = inflect.engine()
 
 pygame.init()
-title = "dungeon engine v0.2.3-dev"
+title = "dungeon engine v0.3.0-dev"
 
 window_res = (1280, 720)
 FPS = 30
@@ -131,6 +132,21 @@ class Map:
              for x in range(self.width)]
             for y in range(self.height)]
         print("Map reset")
+
+    def generate(self):
+        defaultxy = (486, 250)
+        # print("Map Reset Disabled, use Map Editor.")
+        print("Generating new map...")
+        self.grid = dungenerator.get_map(8, 20, 15)
+        assign_tiles()
+        player.x, player.y = random.randint(0, map.width), random.randint(0, map.height)
+        while map.grid[player.x][player.y]['isWall'] != 0:
+            print("attempting to place player at x%d y%d..." % (player.x, player.y))
+            player.x, player.y = random.randint(0, map.width), random.randint(0, map.height)
+        print("Success at x%d y%d!" % (player.x, player.y))
+        self.offsetX = defaultxy[1] - (player.x * (self.tile_size + self.tile_margin))
+        self.offsetY = defaultxy[0] - (player.y * (self.tile_size + self.tile_margin))
+        print("Map generated")
 
 
 # TODO: Camera Class keeps track of camera position and zoom.
@@ -323,7 +339,7 @@ class Player(Entity):
         next_y = self.y + move_dir[self.rotation][1]
         mob = next((mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y)), 0)
         if mob == 0:
-            newmsg = map.grid[next_x][next_y]["name"]
+            newmsg = map.grid[next_x][next_y]["examine"]
         else:
             mob = next(mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y))
             self.attack(mob.ID)
@@ -482,15 +498,17 @@ def createitem(itemname):
         print("%s is unavailable." % itemname)
 
 
-# def createtile(tile_id):
-#     with open(tilesfile, 'r') as data:
-#         tiles = json.load(data)
-#     location = (x, y)
-#     map.tiles.append(Tile(location,
-#                           items[itemname]['name'],
-#                           items[itemname]['examine'],
-#                           items[itemname]['color'],
-#                           items[itemname]['isWall']))
+def assign_tiles():
+    with open(tilesfile, 'r') as data:
+        tiles = json.load(data)
+    for x in range(map.height):
+        for y in range(map.width):
+            ID = map.grid[x][y]
+            map.grid[x][y] = {}
+            map.grid[x][y].update(tiles[str(ID)])
+            map.grid[x][y].update({"isDiscovered": 0, "isVisible": 0, "ID": ID})
+            print(map.grid[x][y], "\n")
+
 
 def message(words, *location):
     words = colortag.decode(words)
@@ -668,6 +686,9 @@ def load():
         with open('save/dungeon3.sav', 'rb') as f:
             data = pickle.load(f)
         map.grid = data['dungeon']
+        for x in range(map.height):
+            for y in range(map.width):
+                print(map.grid[x][y], "\n")
         player.x, player.y, player.rotation = data['player']
         map.offsetX, map.offsetY = data['offset']
         map.tile_size, map.tile_margin = data['viewport']
@@ -695,10 +716,13 @@ def main():
     # if gs.load_game_menu:
     #     loadgame()
     if gs.newgame:
-        map.reset()
+        map.generate()
         newgame()
 
         textbox = "Welcome, <!red>%s!</> Your destiny awaits." % player.name
+
+    else:
+        textbox = "Welcome back, <!red>%s.</> We've been waiting for you." % player.name
 
     RAYS = 360  # Should be 360!
 
@@ -1088,10 +1112,11 @@ def main():
                 pass
 
             """ Create the 4 main surfaces: viewscreen, minimap, textbox, and menu """
+            message(textbox)  # 'textbox' moved to message() function
             gw.blit(viewscreen, (10, 10))
             gw.blit(minimap, (1014, 10))
             gw.blit(infoscreen, (1014, 271))
-            message(textbox)  # 'textbox' moved to message() function
+
 
             # Display game version
             if gs.DISPLAY_VERSION:
