@@ -430,6 +430,7 @@ class Player(Entity):
         next_y = self.y + move_dir[self.rotation][1]
         target = map.grid[next_x][next_y]
 
+
     def die(self):
         message("Oh no, you appear to be dead...")
         player.icon = playerdead
@@ -445,7 +446,7 @@ class Player(Entity):
                 else:
                     can_rest = True
             if can_rest:
-                message("You pause a moment to catch your breath.")
+                message("You take a moment's rest...")
                 rest = random.randint(0, 3)
                 if player.hp + rest >= player.max_hp:
                     player.hp = player.max_hp
@@ -453,6 +454,7 @@ class Player(Entity):
                 else:
                     player.hp = player.hp + rest
                     print("Recovered %d health" % rest)
+                enemy_ai_step()
 
 
 class Monster(Entity):
@@ -604,8 +606,6 @@ def enemy_ai_step():
     print("Checking line of sight for %d enemies..." % len(entities.mobs))
     for enemy in entities.mobs:
         targeting = False
-        wandering = False
-        resting = False
         for i in range(0, RAYS + 1, STEP):
             ax = sintable[i]  # Get value sin(x / (180 / pi))
             ay = costable[i]  # cos(x / (180 / pi))
@@ -616,24 +616,10 @@ def enemy_ai_step():
                 y += ay
                 if x < 0 or y < 0 or x > map.width - 1 or y > map.height - 1:  # If ray is out of range
                     break
-                # try:
-                #     # Discover the tile and make it visible if it exists
-                #     map.grid[int(round(x))][int(round(y))].update(
-                #         {"isDiscovered": 1, "isVisible": 1})
-                # except IndexError:
-                #     break
                 if map.grid[int(round(x))][int(round(y))]["isWall"] == 1:  # Stop ray if it hit
                     break
                 if (int(round(x)), int(round(y))) == (player.x, player.y):
-                    print("%s can see player." % enemy.name)
                     targeting = True
-                else:  # TODO Finish this
-
-                    # idle_actions = [wandering, resting]
-                    # choice = random.choice(idle_actions)
-                    # choice = True
-                    # print(idle_actions)
-                    pass
         if targeting:
             print("%s can see player." % enemy.name)
 
@@ -665,7 +651,23 @@ def enemy_ai_step():
                     enemy.move("forward")
             except IndexError:
                 break
-
+        if not targeting:
+            choice = random.randint(0, 1)
+            if choice == 0:  # "Wandering"
+                turning = random.randint(0, 1)
+                if turning == 0:
+                    enemy.rotate(random.randint(0, 1))
+                if turning == 1:
+                    move_dir = {0: [-1, 0],
+                                180: [1, 0],
+                                -90: [0, 1],
+                                90: [0, -1]}
+                    next_step = (enemy.x + move_dir[enemy.rotation][0], enemy.y + move_dir[enemy.rotation][1])
+                    if map.grid[next_step[0]][next_step[1]]["isWall"] >= 1:
+                        enemy.rotate(random.randint(0, 1))
+                    enemy.move("forward")
+            if choice == 1:  # "Resting", maybe let the monsters heal themselves on higher difficulty?
+                pass
 
 
 def message(words, *location):
@@ -1203,6 +1205,9 @@ def main():
                 if event.key == pygame.K_F1:
                     print("Create Random Monster")
                     createmonster('random')
+                if event.key == pygame.K_F2:
+                    print("Advancing AI")
+                    enemy_ai_step()
         # print(gs.last_message)
 
 if __name__ == '__main__':
