@@ -63,6 +63,7 @@ heroico = pygame.image.load('res/images/maphero.png')
 mobico = pygame.image.load('res/images/mapenemy.png')
 chestico = pygame.image.load('res/images/chest.png')
 deadico = pygame.image.load('res/images/dead_mob.png')
+playerdead = pygame.image.load('res/images/grave.png')
 titlecard = pygame.image.load('res/images/studio_logo.png').convert()
 gamelogo = pygame.image.load('res/images/game_logo2.png').convert()
 
@@ -430,20 +431,28 @@ class Player(Entity):
         target = map.grid[next_x][next_y]
 
     def die(self):
-        print("Oh no, you appear to be dead...")
+        message("Oh no, you appear to be dead...")
+        player.icon = playerdead
 
     def rest(self):
         can_rest = False
-        for mob in entities.mobs:
-            if map.grid[mob.x][mob.y]["isVisible"] == 1:
-                print("You can't rest here, you are in peril!")
-            else:
-                can_rest = True
-        if can_rest:
-            rest = random.randint(0, 3)
-            player.hp = player.hp + rest
-            print("You recover %d health" % rest)
-
+        if player.hp >= player.max_hp:
+            message("You are already fully rested.")
+        else:
+            for mob in entities.mobs:
+                if map.grid[mob.x][mob.y]["isVisible"] == 1:
+                    message("You can't rest here, you are in peril!")
+                else:
+                    can_rest = True
+            if can_rest:
+                message("You pause a moment to catch your breath.")
+                rest = random.randint(0, 3)
+                if player.hp + rest >= player.max_hp:
+                    player.hp = player.max_hp
+                    print("Recovered to max health")
+                else:
+                    player.hp = player.hp + rest
+                    print("Recovered %d health" % rest)
 
 
 class Monster(Entity):
@@ -965,6 +974,13 @@ def main():
                 minimap.blit(tile, ((y + map.offsetY / (map.tile_size + map.tile_margin)) + 110,
                                     (x + map.offsetX / (map.tile_size + map.tile_margin)) + 119))
 
+        """ Draw Containers """
+        for container in entities.containers:
+            if map.grid[container.x][container.y].get("isVisible") == 1:
+                viewscreen.blit(eval(container.icon),
+                                ((container.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
+                                 (container.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
+
         """ Draw the Player Icon """
         maparrow = pygame.transform.rotate(player.icon, player.rotation)
         viewscreen.blit(maparrow, ((player.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
@@ -976,13 +992,6 @@ def main():
                 maparrow = pygame.transform.rotate(enemy.icon, enemy.rotation)
                 viewscreen.blit(maparrow, ((enemy.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
                                            (enemy.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
-
-        """ Draw Containers """
-        for container in entities.containers:
-            if map.grid[container.x][container.y].get("isVisible") == 1:
-                viewscreen.blit(eval(container.icon),
-                                ((container.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
-                                 (container.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
 
         """ Draw the Info Box """
         # stats, inventory, game menu
