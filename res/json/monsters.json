@@ -5,7 +5,9 @@
     "hp":        35,
     "weapon":    "Wicked Blade",
     "damage":    [1, 8],
-    "viewrange": 8
+    "viewrange": 8,
+    "corpsetype": "corpse",
+    "corpse_name": ""
   },
   "goblin": {
     "name":      "Goblin",

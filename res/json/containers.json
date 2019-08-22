@@ -1,0 +1,26 @@
+{
+  "chest": {
+    "name": "chest",
+    "icon": "chestico",
+    "examine": "A trusty short blade, ready for action at a moment's notice.",
+    "slots": 10
+  },
+  "corpse": {
+    "name": "chest",
+    "icon": "deadico",
+    "examine": "A trusty short blade, ready for action at a moment's notice.",
+    "slots": 10
+  },
+  "grave": {
+    "name": "chest",
+    "icon": "graveico",
+    "examine": "A trusty short blade, ready for action at a moment's notice.",
+    "slots": 10
+  },
+  "goo": {
+    "name": "chest",
+    "icon": "deadico",
+    "examine": "A trusty short blade, ready for action at a moment's notice.",
+    "slots": 10
+  }
+}
