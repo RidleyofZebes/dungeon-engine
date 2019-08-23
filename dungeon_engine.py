@@ -16,7 +16,7 @@ import json
 import inflect
 from res.misc import colortag  # <-- I WROTE THAT ONE!
 from res.misc import character_gen
-from res.misc import dungenerator
+from res.misc import dungenerator2
 from res.misc import astar  # <-- Tried to use it, but it broke easily.
 
 # import pprint
@@ -27,7 +27,7 @@ from res.misc import astar  # <-- Tried to use it, but it broke easily.
 p = inflect.engine()
 
 pygame.init()
-title = "dungeon engine v0.3.0-dev"
+title = "dungeon engine v0.3.1-dev"
 
 window_res = (1280, 720)
 FPS = 30
@@ -63,7 +63,9 @@ heroico = pygame.image.load('res/images/maphero.png')
 mobico = pygame.image.load('res/images/mapenemy.png')
 chestico = pygame.image.load('res/images/chest.png')
 deadico = pygame.image.load('res/images/dead_mob.png')
-playerdead = pygame.image.load('res/images/grave.png')
+graveico = pygame.image.load('res/images/grave.png')
+door_open = pygame.image.load('res/images/door_open.png')
+door_closed = pygame.image.load('res/images/door_closed.png')
 titlecard = pygame.image.load('res/images/studio_logo.png').convert()
 gamelogo = pygame.image.load('res/images/game_logo2.png').convert()
 
@@ -139,7 +141,7 @@ class Map:
 
     def generate(self):
         print("Generating new map...")
-        self.grid = dungenerator.get_map(5, 15, 35)
+        self.grid = dungenerator2.get_map(5, 15, 35, 10)
         assign_tiles()
         # player.x, player.y = random.randint(0, map.width-1), random.randint(0, map.height-1)
         # if map.grid[player.x][player.y]['isWall'] != 0:
@@ -152,6 +154,12 @@ class Map:
         print("Map generated")
         print("Spawning monsters...")
         createmonster('random', qty=(random.randint(10, 20)))
+        print("Spawning chests...")
+        for x in range(0, map.width):
+            for y in range(0, map.height):
+                if map.grid[x][y].get("ID") == 4:
+                    createcontainer("chest", [], x, y)
+                    assign_tiles(1, x, y)
 
 
 # TODO: Camera Class keeps track of camera position and zoom.
@@ -334,7 +342,7 @@ class Player(Entity):
         # self.lvl = 1
         # self.gold = 0
 
-    def examine(self):
+    def examine(self):  # FIXME: Unable to examine/interact with entities or mobs
         move_dir = {0: [-1, 0],
                     180: [1, 0],
                     -90: [0, 1],
@@ -342,13 +350,12 @@ class Player(Entity):
         next_x = self.x + move_dir[self.rotation][0]
         next_y = self.y + move_dir[self.rotation][1]
         mob = next((mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y)), 0)
-        if mob == 0:
-            newmsg = map.grid[next_x][next_y]["examine"]
+        container = next((container for container in entities.containers if (next_x, next_y) == (container.x, container.y)), 0)
+        if mob and container == 0:
+            message(map.grid[next_x][next_y]["examine"])
         else:
             mob = next(mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y))
-            self.attack(mob.ID)
-            newmsg = ""
-        return newmsg
+            message(mob.examine)
 
     def additem(self, selection, qty=1):
         for x in range(0, qty):
@@ -429,11 +436,18 @@ class Player(Entity):
         next_x = self.x + move_dir[self.rotation][0]
         next_y = self.y + move_dir[self.rotation][1]
         target = map.grid[next_x][next_y]
-
+        if target.get("ID") == 3:
+            if target["isWall"] == 0:
+                target["isWall"] = 1
+            elif target["isWall"] == 1:
+                target["isWall"] = 0
+        else:
+            target = next((mob for mob in entities.mobs if (mob.x, mob.y) == (next_x, next_y)), None)
+            self.attack(target.ID)
 
     def die(self):
         message("Oh no, you appear to be dead...")
-        player.icon = playerdead
+        player.icon = graveico
 
     def rest(self):
         can_rest = False
@@ -582,15 +596,18 @@ def createcontainer(container_type, inventory, x, y):
         print("%s in unavailable." % container_type)
 
 
-def assign_tiles():
+def assign_tiles(new_tile=None, x=None, y=None):
     with open(tilesfile, 'r') as data:
         tiles = json.load(data)
-    for x in range(map.height):
-        for y in range(map.width):
-            ID = map.grid[x][y]
-            map.grid[x][y] = {}
-            map.grid[x][y].update(tiles[str(ID)])
-            map.grid[x][y].update({"isDiscovered": 0, "isVisible": 0, "ID": ID})
+    if not new_tile:
+        for x in range(map.height):
+            for y in range(map.width):
+                ID = map.grid[x][y]
+                map.grid[x][y] = {}
+                map.grid[x][y].update(tiles[str(ID)])
+                map.grid[x][y].update({"isDiscovered": 0, "isVisible": 0, "ID": ID})
+    else:
+        map.grid[x][y].update(tiles[str(new_tile)])
 
 
 def enemy_ai_step():
@@ -995,6 +1012,17 @@ def main():
                 viewscreen.blit(maparrow, ((enemy.y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
                                            (enemy.x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
 
+        """ Draw Doors """
+        for x in range(0, map.width):
+            for y in range(0, map.height):
+                if map.grid[x][y].get("isVisible") == 1:
+                    if map.grid[x][y].get("ID") == 3 and map.grid[x][y].get("isWall") == 0:
+                        viewscreen.blit(door_open, ((y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
+                                                    (x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
+                    if map.grid[x][y].get("ID") == 3 and map.grid[x][y].get("isWall") == 1:
+                        viewscreen.blit(door_closed, ((y * (map.tile_size + map.tile_margin)) + map.offsetY + 1,
+                                                      (x * (map.tile_size + map.tile_margin)) + map.offsetX + 1))
+
         """ Draw the Info Box """
         # stats, inventory, game menu
         stats_button = pygame.draw.rect(infoscreen, white, (0,
@@ -1129,7 +1157,7 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 pos = pygame.mouse.get_pos()
-                if pos[0] > 10 and pos[1] > 10 and pos[0] < 1009 and pos[
+                if 10 < pos[0] < 1009 and pos[1] > 10 and pos[
                     1] < 537:  # Only take action for clicks within the minimap
                     column = (pos[0] - map.offsetY - 10) // (map.tile_size + map.tile_margin)
                     row = (pos[1] - map.offsetX - 10) // (map.tile_size + map.tile_margin)
@@ -1180,7 +1208,7 @@ def main():
                 if event.key == pygame.K_e:
                     print("Examining...")
                     try:
-                        message(player.examine())
+                        player.examine()
                     except IndexError:
                         print("Nope.")
                         message("You gaze into the <!green>Fathomless Void...</> and the Void gazes back!")
@@ -1208,7 +1236,7 @@ def main():
                 if event.key == pygame.K_F2:
                     print("Advancing AI")
                     enemy_ai_step()
-        # print(gs.last_message)
+
 
 if __name__ == '__main__':
     main()

@@ -7,6 +7,14 @@
     "weight":      10,
     "damage":      [1, 6]
   },
+    "dagger": {
+    "name":        "Dagger",
+    "examine":     "Small, pointy, deadly; best served with a coating of your favorite toxin.",
+    "slot":        "weapon",
+    "isEquipable": true,
+    "weight":      5,
+    "damage":      [1, 4]
+  },
   "shield": {
     "name":        "Shield",
     "examine":     "There are few things better in life than a solid slab of oak and leather between you and a deadly edge.",
@@ -33,7 +41,7 @@
   },
   "whetstone": {
     "name":        "Whetstone",
-    "examine":     "When life seems dull, this course stone will put an edge back into your life.",
+    "examine":     "When everything seems dull, this coarse stone will put an edge back into your life.",
     "slot":        "enhancement",
     "isEquipable": false,
     "weight":      2,

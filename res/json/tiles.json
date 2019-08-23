@@ -7,7 +7,7 @@
   },
   "1": {
     "name": "Stone Floor",
-    "examine": "The plain stone floor is made of rough-hewn rock, worn smooth by the passage of time and countless footsteps.",
+    "examine": "The plain, stone floor is made of rough-hewn rock, worn smooth by the passage of time and countless footsteps.",
     "color": [169, 169, 169],
     "isWall": 0
   },
@@ -18,9 +18,15 @@
     "isWall": 1
   },
   "3": {
-    "name": "Custom Block",
-    "examine": "Custom description! ?????",
-    "color": [78, 48, 132],
-    "isWall": 0
+    "name": "Door",
+    "examine": "The tall, oaken door stands before you, foreboding and impassive. What lies beyond, treasure or misfortune?",
+    "color": [169, 169, 169],
+    "isWall": 1
+  },
+  "4": {
+  "name": "Custom Block",
+  "examine": "Custom description! ?????",
+  "color": [78, 48, 132],
+  "isWall": 0
   }
 }
