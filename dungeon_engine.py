@@ -27,7 +27,7 @@ from res.misc import astar  # <-- Tried to use it, but it broke easily.
 p = inflect.engine()
 
 pygame.init()
-title = "dungeon engine v0.3.1-dev"
+title = "dungeon engine v0.3.3-dev"
 
 window_res = (1280, 720)
 FPS = 30
@@ -342,20 +342,20 @@ class Player(Entity):
         # self.lvl = 1
         # self.gold = 0
 
-    def examine(self):  # FIXME: Unable to examine/interact with entities or mobs
+    def examine(self):
         move_dir = {0: [-1, 0],
                     180: [1, 0],
                     -90: [0, 1],
                     90: [0, -1]}
         next_x = self.x + move_dir[self.rotation][0]
         next_y = self.y + move_dir[self.rotation][1]
-        mob = next((mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y)), 0)
-        container = next((container for container in entities.containers if (next_x, next_y) == (container.x, container.y)), 0)
-        if mob and container == 0:
-            message(map.grid[next_x][next_y]["examine"])
-        else:
-            mob = next(mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y))
-            message(mob.examine)
+        target = next((mob for mob in entities.mobs if (next_x, next_y) == (mob.x, mob.y)), None)
+        if not target:
+            target = next((container for container in entities.containers if (next_x, next_y) == (container.x, container.y)), None)
+            if not target:
+                message(map.grid[next_x][next_y]["examine"])
+            else:
+                message(target.examine)
 
     def additem(self, selection, qty=1):
         for x in range(0, qty):
@@ -443,7 +443,11 @@ class Player(Entity):
                 target["isWall"] = 0
         else:
             target = next((mob for mob in entities.mobs if (mob.x, mob.y) == (next_x, next_y)), None)
-            self.attack(target.ID)
+            if not target:
+                target = next((container for container in entities.containers if (container.x, container.y) == (next_x, next_y)), None)
+                print(target.inventory)  # TODO: Make it where you can look at items in game screen
+            else:
+                self.attack(target.ID)
 
     def die(self):
         message("Oh no, you appear to be dead...")
