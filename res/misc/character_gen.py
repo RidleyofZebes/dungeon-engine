@@ -327,8 +327,6 @@ def main(statpool):
     player_name_field.blit(question, (10, 10))
     pygame.display.update()
 
-
-
     while get_name:
         gw.blit(player_name_field, (window_res[0] / 2 - 350, window_res[1] / 2 - 125))
 

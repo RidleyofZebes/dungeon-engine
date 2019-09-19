@@ -2,25 +2,25 @@
   "chest": {
     "name": "chest",
     "icon": "chestico",
-    "examine": "A trusty short blade, ready for action at a moment's notice.",
+    "examine": "An iron-bound construct of wooden planks generally containing something useful. Like socks.",
     "slots": 10
   },
   "corpse": {
-    "name": "chest",
+    "name": "corpse",
     "icon": "deadico",
-    "examine": "A trusty short blade, ready for action at a moment's notice.",
-    "slots": 10
+    "examine": "The remains of the fallen. Worthy foe or trifle, this is all that remains of its legacy.",
+    "slots": 5
   },
   "grave": {
-    "name": "chest",
+    "name": "grave",
     "icon": "graveico",
-    "examine": "A trusty short blade, ready for action at a moment's notice.",
-    "slots": 10
+    "examine": "A lonely monument to a questionable series of decisions. It bears a short epitaph, nearly illegible with the passage of time.",
+    "slots": 3
   },
   "goo": {
     "name": "chest",
     "icon": "deadico",
-    "examine": "A trusty short blade, ready for action at a moment's notice.",
-    "slots": 10
+    "examine": "A shimmering, oily smear, slowly dissipating into the porous ground. Hopefully it will never move again.",
+    "slots": 2
   }
 }

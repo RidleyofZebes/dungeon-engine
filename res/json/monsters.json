@@ -1,6 +1,7 @@
 {
   "bandit": {
     "name":      "Bandit",
+    "mobtype":   "humanoid",
     "examine":   "The bandit is tall and lean, a smirk twisting his features into something sinister. Tattoos and scars cover his body and though his clothes are simple rags, he wields a wicked looking blade.",
     "hp":        35,
     "weapon":    "Wicked Blade",
@@ -11,6 +12,7 @@
   },
   "goblin": {
     "name":      "Goblin",
+    "mobtype":   "humanoid",
     "examine":   "The goblin is short and squat, its scabby skin is a sickly shade of green. Red, beady eyes peer from under a heavy brow and long ears draw to a point much sharper than the rusty sword it grips.",
     "hp":        20,
     "weapon":    "Rusty Shortsword",
@@ -19,6 +21,7 @@
   },
   "slime": {
     "name":      "Slime",
+    "mobtype":   "gelatinous",
     "examine":   "A shimmering, oily blob of sentient jelly oozes slowly over the ground, twitching and shuddering in response to unseen stimuli. It seems hardly intelligent, though somehow vaguely menacing...",
     "hp":        35,
     "weapon":    "Sticky Pseudopod",
@@ -27,6 +30,7 @@
   },
   "zombie": {
     "name":      "Zombie",
+    "mobtype":   "humanoid",
     "examine":   "The rotting, stinking remains of a man, it's face no longer recognizable in death. Perhaps it was once a beloved member of a family, but now animated by foul magics, it is nothing but a roaming corpse.",
     "hp":        15,
     "weapon":    "Ragged Claws",
@@ -35,6 +39,7 @@
     },
   "ogre": {
     "name":      "Ogre",
+    "mobtype":   "humanoid",
     "examine":   "Tall as a tree and large as a boulder, the ogre towers over the landscape. Pale blue-green lips draw back from yellowed, blunt teeth in a snarl that proclaims all around it as possessions.",
     "hp":        50,
     "weapon":    "Tree-limb club",

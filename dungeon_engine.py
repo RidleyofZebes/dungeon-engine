@@ -59,15 +59,19 @@ stats_font = pygame.font.Font('res/fonts/Poco.ttf', 20)
 tiny_font = pygame.font.Font('res/fonts/Poco.ttf', 10)
 
 # Image(s)
-heroico = pygame.image.load('res/images/maphero.png')
-mobico = pygame.image.load('res/images/mapenemy.png')
-chestico = pygame.image.load('res/images/chest.png')
-deadico = pygame.image.load('res/images/dead_mob.png')
-graveico = pygame.image.load('res/images/grave.png')
-door_open = pygame.image.load('res/images/door_open.png')
-door_closed = pygame.image.load('res/images/door_closed.png')
+heroico = pygame.image.load('res/images/maphero.png').convert_alpha()
+mobico = pygame.image.load('res/images/mapenemy.png').convert_alpha()
+chestico = pygame.image.load('res/images/chest.png').convert_alpha()
+chest_open = pygame.image.load('res/images/chest_open.png').convert_alpha()
+deadico = pygame.image.load('res/images/dead_mob.png').convert_alpha()
+graveico = pygame.image.load('res/images/grave.png').convert_alpha()
+door_open = pygame.image.load('res/images/door_open.png').convert_alpha()
+door_closed = pygame.image.load('res/images/door_closed.png').convert_alpha()
 titlecard = pygame.image.load('res/images/studio_logo.png').convert()
 gamelogo = pygame.image.load('res/images/game_logo2.png').convert()
+
+swordico = pygame.image.load('res/images/sword.png').convert_alpha()
+shieldico = pygame.image.load('res/images/shield.png').convert_alpha()
 
 # .JSON(s)
 monstersfile = 'res/json/monsters.json'
@@ -88,6 +92,8 @@ class GameState:
         self.mainmenu = False
         self.newgame = False
         self.mapedit = False
+
+        self.inv_interface = False
 
         self.tile_desc = ""
         self.last_message = ""
@@ -117,6 +123,9 @@ class Entities:
               "Containers:\n" + str(containerlist) + "\n"
               "Next entity ID: " + str(self.entityID))
 
+    def reset(self):
+        self.__init__()
+
 
 class Map:
     def __init__(self):
@@ -135,13 +144,15 @@ class Map:
         player.y = 0
         self.offsetX = gs.defaultxy[1]
         self.offsetY = gs.defaultxy[0]
+        entities.reset()
         self.grid = [[1 for x in range(self.width)] for y in range(self.height)]
         assign_tiles()
         print("Map reset")
 
     def generate(self):
         print("Generating new map...")
-        self.grid = dungenerator2.get_map(5, 15, 35, 10)
+        entities.reset()
+        self.grid = dungenerator2.get_map(5, 10, 35, 10)
         assign_tiles()
         # player.x, player.y = random.randint(0, map.width-1), random.randint(0, map.height-1)
         # if map.grid[player.x][player.y]['isWall'] != 0:
@@ -158,7 +169,8 @@ class Map:
         for x in range(0, map.width):
             for y in range(0, map.height):
                 if map.grid[x][y].get("ID") == 4:
-                    createcontainer("chest", [], x, y)
+                    # TODO: pull inventory from loot table instead of hard-coding
+                    createcontainer("chest", ["sword", "shield", "shield", "shield", "shield", "shield", "shield", "shield", "shield", "shield"], x, y)
                     assign_tiles(1, x, y)
 
 
@@ -329,10 +341,11 @@ class Player(Entity):
         self.xp = 0
         self.lvl = 1
         self.hp = self.max_hp
-        self.default_weapon = Item(None, "Fist", "", "weapon", True, 0, [0, 2])
+        self.default_weapon = Item(None, "Fist", "swordico", "", "weapon", True, 0, [0, 2])
         self.weapon = self.default_weapon
         self.armor = []
         self.inventory = []
+        self.inv_item_array = []
         self.gold = 0
         self.max_carry_weight = (self.stat['con'] + self.stat['str']) * 10
         # self.killcount = 0
@@ -356,6 +369,8 @@ class Player(Entity):
                 message(map.grid[next_x][next_y]["examine"])
             else:
                 message(target.examine)
+        else:
+            message(target.examine)
 
     def additem(self, selection, qty=1):
         for x in range(0, qty):
@@ -415,7 +430,8 @@ class Player(Entity):
         print("Attacking %s with %s" % (target.name, self.weapon.name))
         atkdamage = random.randint(self.weapon.damage[0], self.weapon.damage[1])
         target.hp -= atkdamage
-        print("You deal %d damage to the %s leaving it with %d health." % (atkdamage, target.name, target.hp))
+        message("You attack the %s with your %s for %d damage, leaving it with %d health."
+                % (target.name, self.weapon.name, atkdamage, target.hp))
         if not target.isHostile:
             x = random.randint(0, 1)
             if x == 0:
@@ -445,13 +461,23 @@ class Player(Entity):
             target = next((mob for mob in entities.mobs if (mob.x, mob.y) == (next_x, next_y)), None)
             if not target:
                 target = next((container for container in entities.containers if (container.x, container.y) == (next_x, next_y)), None)
-                print(target.inventory)  # TODO: Make it where you can look at items in game screen
+                if not target:
+                    message("There's nothing there...")
+                else:
+                    if target.name == "chest":
+                        target.icon = "chest_open"
+                    gs.infoscreen = 1
+                    pygame.display.update()
+                    inv_interface(target.ID)
+                    gs.infoscreen = 0
             else:
                 self.attack(target.ID)
 
     def die(self):
         message("Oh no, you appear to be dead...")
         player.icon = graveico
+        player.rotation = 0
+        gs.gameover = True
 
     def rest(self):
         can_rest = False
@@ -476,8 +502,9 @@ class Player(Entity):
 
 
 class Monster(Entity):
-    def __init__(self, ID, name, examine, hp, weapon, damage, viewrange, isHostile, x, y):
+    def __init__(self, ID, mobtype, name, examine, hp, weapon, damage, viewrange, isHostile, x, y):
         self.ID = ID
+        self.mobtype = mobtype
         self.icon = mobico
         self.rotation = 0
         self.name = name
@@ -511,9 +538,10 @@ class Monster(Entity):
 
 
 class Item:
-    def __init__(self, ID, name, examine, slot, isEquipable, weight, damage):
+    def __init__(self, ID, name, icon, examine, slot, isEquipable, weight, damage):
         self.ID = ID
         self.name = name
+        self.icon = icon
         self.examine = examine
         self.slot = slot
         self.isEquipable = isEquipable
@@ -522,11 +550,12 @@ class Item:
 
 
 class Container:
-    def __init__(self, ID, name, icon, examine, inventory, x, y):
+    def __init__(self, ID, name, icon, examine, slots, inventory, x, y):
         self.ID = ID
         self.name = name
         self.icon = icon
         self.examine = examine
+        self.slots = slots
         self.inventory = inventory
         self.x = x
         self.y = y
@@ -545,6 +574,7 @@ def createmonster(monster, qty=1):
         token = str(entities.entityID)
         if monster in monsters:
             entities.mobs.append(Monster(token,
+                                         monsters[monster]['mobtype'],
                                          monsters[monster]['name'],
                                          monsters[monster]['examine'],
                                          monsters[monster]['hp'],
@@ -570,6 +600,7 @@ def createitem(itemname):
     if itemname in items:
         entities.items.append(Item(token,
                                    items[itemname]['name'],
+                                   items[itemname]['icon'],
                                    items[itemname]['examine'],
                                    items[itemname]['slot'],
                                    items[itemname]['isEquipable'],
@@ -586,12 +617,17 @@ def createcontainer(container_type, inventory, x, y):
     with open(containersfile, 'r') as data:
         containers = json.load(data)
     token = str(entities.entityID)
-    contents = [inventory]
+    contents = []
+    for item in inventory:
+        item_id = createitem(item)
+        contents.append(next(thing for thing in entities.items if thing.ID == item_id))
+    print(contents)
     if container_type in containers:
         entities.containers.append(Container(token,
                                              containers[container_type]['name'],
                                              containers[container_type]['icon'],
                                              containers[container_type]['examine'],
+                                             containers[container_type]['slots'],
                                              contents,
                                              x, y))
         print("created container %s" % container_type)
@@ -612,6 +648,64 @@ def assign_tiles(new_tile=None, x=None, y=None):
                 map.grid[x][y].update({"isDiscovered": 0, "isVisible": 0, "ID": ID})
     else:
         map.grid[x][y].update(tiles[str(new_tile)])
+
+
+def inv_interface(ID):
+    container = next((container for container in entities.containers if ID == container.ID), None)
+    gs.inv_interface = True
+
+    while gs.inv_interface:
+        box_offset = (window_res[0] / 2 - 240, window_res[1] / 2 - 250)
+
+        container_screen = pygame.Surface((220, 120))
+        cs_border = pygame.draw.rect(container_screen, white, (0, 0, 220, 120), 0)
+        pygame.draw.rect(container_screen, black, (4, 4, 212, 112), 0)
+
+        windowheader = stats_font.render("Contents of %s:" % container.name, 0, white)
+        container_screen.blit(windowheader, (10, 0))
+
+        item_offset_x = 10
+        item_offset_y = 10
+        item_array = []
+
+        slot_offset_x = 10
+        slot_offset_y = 30
+        slot_dims = 40
+
+        for slot in range(container.slots):
+            pygame.draw.rect(container_screen, white, (slot_offset_x, slot_offset_y, slot_dims, slot_dims), 1)
+            slot_offset_x = slot_offset_x + slot_dims
+            if slot_offset_x >= 200:
+                slot_offset_y = slot_offset_y + slot_dims
+                slot_offset_x = 10
+        for item in container.inventory:
+            icon = eval(item.icon)
+            itemicon = container_screen.blit(icon, (8+item_offset_x, 27+item_offset_y))
+            item_array.append([itemicon, item.ID])
+            item_offset_x = item_offset_x + 40
+            if item_offset_x >= 200:
+                item_offset_y = item_offset_y + 40
+                item_offset_x = 10
+        gw.blit(container_screen, box_offset)
+
+        pygame.display.update()
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                pos = (pygame.mouse.get_pos()[0] - box_offset[0], pygame.mouse.get_pos()[1] - box_offset[1])
+                for rect in item_array:
+                    if rect[0].collidepoint(pos):
+                        take_item = next(item for item in entities.items if item.ID == rect[1])
+                        player.inventory.append(take_item)
+                        container.inventory.remove(next(item for item in container.inventory if item.ID == rect[1]))
+                        pygame.display.update()
+                if not cs_border.collidepoint(pos):
+                    print("outside area")
+                    gs.inv_interface = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                gs.inv_interface = False
 
 
 def enemy_ai_step():
@@ -641,6 +735,7 @@ def enemy_ai_step():
                     break
                 if (int(round(x)), int(round(y))) == (player.x, player.y):
                     targeting = True
+                    message("The %s sees you!" % enemy.name)
         if targeting:
             print("%s can see player." % enemy.name)
 
@@ -653,6 +748,9 @@ def enemy_ai_step():
 
             path = astar.getpath(map.grid, current_location, target)
             print(path)
+            if not path[1]:
+                print("That's a wall alright")
+                continue
 
             move_dir = {0: [-1, 0],
                         180: [1, 0],
@@ -684,8 +782,12 @@ def enemy_ai_step():
                                 -90: [0, 1],
                                 90: [0, -1]}
                     next_step = (enemy.x + move_dir[enemy.rotation][0], enemy.y + move_dir[enemy.rotation][1])
-                    if map.grid[next_step[0]][next_step[1]]["isWall"] >= 1:
-                        enemy.rotate(random.randint(0, 1))
+                    try:
+                        if map.grid[next_step[0]][next_step[1]]["isWall"] >= 1:
+                            enemy.rotate(random.randint(0, 1))
+                    except IndexError:
+                        print("Something bad happened, enemy tried to move off map? investigate.")
+                        print(enemy.x, enemy.y)
                     enemy.move("forward")
             if choice == 1:  # "Resting", maybe let the monsters heal themselves on higher difficulty?
                 pass
@@ -1095,13 +1197,34 @@ def main():
                                                  gs.infoscreen_size[0] / 3, 1))
 
         if gs.infoscreen == 1:  # Inventory
+            windowheader = stats_font.render("Inventory:", 0, white)
+            infoscreen.blit(windowheader, (10, 0))
+            item_offset_x = 10
+            item_offset_y = 10
+
+            slot_offset_x = 10
+            slot_offset_y = 30
+            slot_dims = 40
+            for slot in range(len(player.inventory)):
+                pygame.draw.rect(infoscreen, white, (slot_offset_x, slot_offset_y, slot_dims, slot_dims), 1)
+                slot_offset_x = slot_offset_x + slot_dims
+                if slot_offset_x >= 250:
+                    slot_offset_y = slot_offset_y + slot_dims
+                    slot_offset_x = 10
+            for item in player.inventory:
+                icon = eval(item.icon)
+                itemicon = infoscreen.blit(icon, (8 + item_offset_x, 27 + item_offset_y))
+                player.inv_item_array.append([itemicon, item.ID])
+                item_offset_x = item_offset_x + 40
+                if item_offset_x >= 250:
+                    item_offset_y = item_offset_y + 40
+                    item_offset_x = 10
+
             pygame.draw.rect(infoscreen, black, (gs.infoscreen_size[0] / 3, gs.infoscreen_size[1] - 30,
                                                  gs.infoscreen_size[0] / 3, 1))
-            pass
         if gs.infoscreen == 2:  # Game Menu
             pygame.draw.rect(infoscreen, black, (((gs.infoscreen_size[0] / 3) * 2), gs.infoscreen_size[1] - 30,
                                                  gs.infoscreen_size[0] / 3, 1))
-            pass
 
         """ Create the 4 main surfaces: viewscreen, minimap, textbox, and menu """
 
@@ -1154,10 +1277,17 @@ def main():
                     gs.infoscreen = 0
                 if inventory_button.collidepoint(pos2):
                     print("Inventory Menu")
+                    player.showinventory()
                     gs.infoscreen = 1
                 if menu_button.collidepoint(pos2):
                     print("Game Menu")
                     gs.infoscreen = 2
+
+                if gs.infoscreen == 1:
+                    for rect in player.inv_item_array:
+                        if rect[0].collidepoint(pos2):
+                            print(rect)
+                            player.equip(rect[1])
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 pos = pygame.mouse.get_pos()
