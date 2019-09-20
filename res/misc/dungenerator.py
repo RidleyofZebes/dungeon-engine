@@ -186,6 +186,8 @@ def map_canvas():
                 dungeon.grid[x][y] = 1
             if tuple(grid[x][y]) == dkgray:  # Walls
                 dungeon.grid[x][y] = 2
+            if tuple(grid[x][y]) == black:  # Room Border
+                dungeon.grid[x][y] = 2
             if tuple(grid[x][y]) == blue:  # Doors
                 dungeon.grid[x][y] = 3
             if tuple(grid[x][y]) == yellow:  # Chests

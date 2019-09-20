@@ -16,7 +16,7 @@ import json
 import inflect
 from res.misc import colortag  # <-- I WROTE THAT ONE!
 from res.misc import character_gen
-from res.misc import dungenerator2
+from res.misc import dungenerator
 from res.misc import astar  # <-- Tried to use it, but it broke easily.
 
 # import pprint
@@ -152,7 +152,7 @@ class Map:
     def generate(self):
         print("Generating new map...")
         entities.reset()
-        self.grid = dungenerator2.get_map(5, 10, 35, 10)
+        self.grid = dungenerator.get_map(5, 10, 35, 10)
         assign_tiles()
         # player.x, player.y = random.randint(0, map.width-1), random.randint(0, map.height-1)
         # if map.grid[player.x][player.y]['isWall'] != 0:
