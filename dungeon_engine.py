@@ -14,10 +14,16 @@ import random
 import itertools
 import json
 import inflect
+
 from res.misc import colortag  # <-- I WROTE THAT ONE!
 from res.misc import character_gen
 from res.misc import dungenerator
 from res.misc import astar  # <-- Tried to use it, but it broke easily.
+
+''' PyInstaller Workaround '''
+import numpy.random.common
+import numpy.random.bounded_integers
+import numpy.random.entropy
 
 # import pprint
 # import sys
