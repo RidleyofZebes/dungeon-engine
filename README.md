@@ -18,7 +18,7 @@ Key   | Action
 `Ctrl + R` | Reset dungeon
 `Ctrl + Z` | Save
 `Ctrl + X` | Load
-`Mouse` | Inventory, equipment, and most other basic controlls
+`Mouse` | Inventory, equipment, and most other basic controls
 
 ---
 
