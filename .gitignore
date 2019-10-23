@@ -7,3 +7,7 @@
 /res/frame.png
 /res/viewportmockup.png
 /res/__pycache__
+/build/
+/dist/
+/dungeon_engine.spec
+/dungeon_engine.exe
