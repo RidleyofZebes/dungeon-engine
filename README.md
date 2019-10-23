@@ -2,8 +2,31 @@
 Dungeon Engine is the base for a dungeon-crawl style RPG experience with roguelike inspirations. It is written in Python
 with PyGame.
 
+![Title Screen](https://i.imgur.com/eWYknKa.png)
+
+[More Screenshots...](https://imgur.com/gallery/vY8L8dL)
+
+### controls:
+* `W S` - Forward, Backward
+* `A D` - Turn left, right
+  * `+ Shift` - Strafe
+* `E` - Examine
+* `Z` - Rest
+* `Space` - Activate
+* Inventory and equipment can be accessed and equipped via Mouse
+* `Ctrl + R` - Reset dungeon
+* `Ctrl + Z` - Save
+* `Ctrl + X` - Load
+
+---
 
 ### changelog:
+##### v0.3.3-dev | `09-20-2019`
+  * Stable testing release
+  * Kinda forgot to keep track of changelog
+  * Changelog will only be updated on releases
+  * Check git commits for detailed changes
+  
 ##### v0.2.2-dev | `03-24-2019`
   * Added monsters with limited A* pathfinding
   * Added descriptions for tiles, mobs, and items
